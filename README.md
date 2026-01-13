@@ -14,6 +14,7 @@ Extensions, skills, and rules for [Pi](https://github.com/badlogic/pi-mono) codi
 | `sandbox/`               | **[WIP]** Sandbox bash commands using [@anthropic-ai/sandbox-runtime](https://www.npmjs.com/package/@anthropic-ai/sandbox-runtime) | Original                                                                                                                                         |
 | `webfetch.ts`            | Fetch URL content and convert to markdown/text/html                                                                                | Original                                                                                                                                         |
 | `websearch.ts`           | Web search via [Exa AI](https://exa.ai) MCP API                                                                                    | Original                                                                                                                                         |
+| `notify.ts`              | Send desktop notifications on task completion (OSC 777/9)                                                                          | Based on [pi-mono example](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions/notify.ts)                    |
 
 ## Skills
 
