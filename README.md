@@ -12,7 +12,7 @@ Extensions, skills, and rules for [Pi](https://github.com/badlogic/pi-mono) codi
 | `question.ts`            | Let the LLM ask user questions with selectable options                                                                             | Simplified version of [pi-mono example](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions/question.ts)     |
 | `rules.ts`               | Load rule files from `~/.pi/agent/rules/` into system prompt                                                                       | Based on [pi-mono claude-rules example](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions/claude-rules.ts) |
 | `sandbox/`               | **[WIP]** Sandbox bash commands using [@anthropic-ai/sandbox-runtime](https://www.npmjs.com/package/@anthropic-ai/sandbox-runtime) | Original                                                                                                                                         |
-| `webfetch.ts`            | Fetch URL content and convert to markdown/text/html                                                                                | Original                                                                                                                                         |
+| `webfetch/`              | Fetch URL content and convert to markdown/text/html                                                                                | Original                                                                                                                                         |
 | `websearch.ts`           | Web search via [Exa AI](https://exa.ai) MCP API                                                                                    | Original                                                                                                                                         |
 | `notify.ts`              | Send desktop notifications on task completion (OSC 777/9)                                                                          | Based on [pi-mono example](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions/notify.ts)                    |
 
@@ -43,11 +43,11 @@ Copy desired extensions to `~/.pi/agent/extensions/`:
 cp extensions/codesearch.ts ~/.pi/agent/extensions/
 ```
 
-For extensions with dependencies (like `sandbox/`), copy the whole directory and run `npm install`:
+For extensions with dependencies (`sandbox/`, `webfetch/`), copy the whole directory and run `bun install`:
 
 ```bash
-cp -r extensions/sandbox ~/.pi/agent/extensions/
-cd ~/.pi/agent/extensions/sandbox && npm install
+cp -r extensions/webfetch ~/.pi/agent/extensions/
+cd ~/.pi/agent/extensions/webfetch && bun install
 ```
 
 ### Skills
