@@ -1,0 +1,24 @@
+#!/usr/bin/expect -f
+set timeout 60
+
+proc type_slow {text {delay 40}} {
+    foreach char [split $text ""] {
+        send -- $char
+        after $delay
+    }
+}
+
+spawn asciinema rec --overwrite --window-size 80x24 -c pi recordings/websearch.cast
+
+expect "Sandbox"
+
+type_slow "search the web for Bun 1.3 new features"
+send "\r"
+
+sleep 25
+
+send "\x03"
+sleep 0.3
+send "\x03"
+
+expect eof

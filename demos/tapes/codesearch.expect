@@ -1,0 +1,24 @@
+#!/usr/bin/expect -f
+set timeout 60
+
+proc type_slow {text {delay 40}} {
+    foreach char [split $text ""] {
+        send -- $char
+        after $delay
+    }
+}
+
+spawn asciinema rec --overwrite --window-size 80x24 -c pi recordings/codesearch.cast
+
+expect "Sandbox"
+
+type_slow "search for useEffect cleanup pattern in TypeScript"
+send "\r"
+
+sleep 25
+
+send "\x03"
+sleep 0.3
+send "\x03"
+
+expect eof
