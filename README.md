@@ -26,7 +26,7 @@ Extensions, skills, and rules for [Pi](https://github.com/badlogic/pi-mono) codi
 | `applescript`             | AppleScript and JXA automation for macOS                                                  | Adapted from [claude-skills-generator](https://github.com/martinholovsky/claude-skills-generator/tree/main/skills/applescript) |
 | `chat-to-skill`           | Convert current chat session into a reusable skill (long-term memory)                     | Original                                                                                                                       |
 | `keyboard-layout-decoder` | Decode text typed with wrong keyboard layout (Russian ↔ English)                          | Original                                                                                                                       |
-| `plan-mode`               | Plan-only: read-only exploration + executable plan + unresolved questions                 | Derived from Claude Code plan-mode prompt (local install)                                                                      |
+
 | `skill-discovery`         | Discover agent skills on GitHub via `gh` CLI                                              | Original                                                                                                                       |
 
 ## Rules
