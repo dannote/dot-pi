@@ -8,7 +8,7 @@ Extensions, skills, and rules for [Pi](https://github.com/badlogic/pi-mono) codi
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `codesearch.ts`          | Search public GitHub code via [grep.app](https://grep.app) MCP API                                                                 | Original                                                                                                                                         |
 | `confirm-destructive.ts` | Confirm before clearing session or switching with unsaved work                                                                     | Based on [pi-mono example](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions/confirm-destructive.ts)       |
-| `lsp/`                   | Language Server Protocol for code intelligence (definition, references, hover, diagnostics, rename, etc.)                          | Based on [oh-my-pi](https://github.com/can1357/oh-my-pi/tree/41fed50e5861cfa8bac505cf3eb238f55b228ae8/packages/coding-agent/src/core/tools/lsp)   |
+| `lsp/`                   | Language Server Protocol for code intelligence (definition, references, hover, diagnostics, rename, etc.)                          | Based on [oh-my-pi](https://github.com/can1357/oh-my-pi/tree/41fed50e5861cfa8bac505cf3eb238f55b228ae8/packages/coding-agent/src/core/tools/lsp)  |
 | `notify.ts`              | Send desktop notifications on task completion (OSC 777/9)                                                                          | Based on [pi-mono example](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions/notify.ts)                    |
 | `permission-gate.ts`     | Block dangerous bash commands (rm -rf, sudo, git push, etc.)                                                                       | Based on [pi-mono example](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions/permission-gate.ts)           |
 | `question.ts`            | Let the LLM ask user questions with selectable options                                                                             | Simplified version of [pi-mono example](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions/question.ts)     |
@@ -19,14 +19,14 @@ Extensions, skills, and rules for [Pi](https://github.com/badlogic/pi-mono) codi
 
 ## Skills
 
-| Skill                     | Description                                                           | Origin |
-| ------------------------- | --------------------------------------------------------------------- | ------ |
-| `agent-browser`           | Browser automation with [agent-browser](https://github.com/vercel-labs/agent-browser) CLI | Adapted from [agent-browser docs](https://github.com/vercel-labs/agent-browser) |
-| `applescript`             | AppleScript and JXA automation for macOS                              | Adapted from [claude-skills-generator](https://github.com/martinholovsky/claude-skills-generator/tree/main/skills/applescript) |
-| `chat-to-skill`           | Convert current chat session into a reusable skill (long-term memory) | Original |
-| `keyboard-layout-decoder` | Decode text typed with wrong keyboard layout (Russian ↔ English)      | Original |
-| `plan-mode`               | Concise planning mode with unresolved questions                       | Original |
-| `skill-discovery`         | Discover agent skills on GitHub via `gh` CLI                          | Original |
+| Skill                     | Description                                                                               | Origin                                                                                                                         |
+| ------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `agent-browser`           | Browser automation with [agent-browser](https://github.com/vercel-labs/agent-browser) CLI | Adapted from [agent-browser docs](https://github.com/vercel-labs/agent-browser)                                                |
+| `applescript`             | AppleScript and JXA automation for macOS                                                  | Adapted from [claude-skills-generator](https://github.com/martinholovsky/claude-skills-generator/tree/main/skills/applescript) |
+| `chat-to-skill`           | Convert current chat session into a reusable skill (long-term memory)                     | Original                                                                                                                       |
+| `keyboard-layout-decoder` | Decode text typed with wrong keyboard layout (Russian ↔ English)                          | Original                                                                                                                       |
+| `plan-mode`               | Plan-only: read-only exploration + executable plan + unresolved questions                | Derived from Claude Code plan-mode prompt (local install)                                                                      |
+| `skill-discovery`         | Discover agent skills on GitHub via `gh` CLI                                              | Original                                                                                                                       |
 
 ## Rules
 
