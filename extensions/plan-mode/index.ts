@@ -156,7 +156,7 @@ export default function planModeExtension(pi: ExtensionAPI): void {
       return {
         message: {
           customType: "plan-mode-context",
-          content: `[PLAN MODE ACTIVE]\nYou are in plan mode (read-only).\n\nRestrictions:\n- Tools: ${PLAN_MODE_TOOLS.join(", ")}\n- No edit/write; no scratch files\n- Bash is allowlisted read-only\n\nOutput requirements:\n- Make plan extremely concise. Sacrifice grammar for concision.\n- One recommended plan only (no long option lists unless asked).\n- End with unresolved questions: \\"Unresolved: none\\" or list questions.\n\nWrite the plan under a \\"Plan:\\" header with numbered steps.`,
+          content: `[PLAN MODE ACTIVE]\nYou are in plan mode (read-only).\n\nRestrictions:\n- Tools: ${PLAN_MODE_TOOLS.join(", ")}\n- No edit/write; no scratch files\n- Bash is allowlisted read-only\n\nOutput requirements (strict):\n- Make plan extremely concise. Sacrifice grammar for concision.\n- One recommended plan only (no long option lists unless asked).\n- Never ask: \"is my plan ok?\" / \"should I proceed?\".\n\nFormat (strict):\nPlan:\n1. ...\n2. ...\nFiles: path1, path2, ...\nChecks: (only if non-obvious)\nUnresolved: none | Q1? Q2?`,
           display: false,
         },
       };
