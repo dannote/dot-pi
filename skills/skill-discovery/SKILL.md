@@ -30,6 +30,7 @@ gh search repos --topic=gemini-cli-skills --sort=stars --limit=20 --json fullNam
 ## Find repos with SKILL.md files
 
 Search GitHub code for actual SKILL.md files (finds repos not tagged with topics):
+
 ```bash
 # Find repos containing SKILL.md files, then fetch stars via GraphQL (single query)
 repos=$(gh search code "filename:SKILL.md" --limit=50 --json repository | jq -r '.[].repository.nameWithOwner' | sort -u)
@@ -51,6 +52,7 @@ gh api graphql -f query="$query" --jq '.data | to_entries[] | "\(.value.nameWith
 ## Build catalog from awesome lists
 
 For repos with "awesome" in name, fetch README:
+
 ```bash
 gh api "repos/<owner>/<repo>/contents/README.md" --jq '.content' | base64 -d >> /tmp/skills-catalog.md
 ```
@@ -58,6 +60,7 @@ gh api "repos/<owner>/<repo>/contents/README.md" --jq '.content' | base64 -d >> 
 ## List skills in a collection repo
 
 For repos with skills directories:
+
 ```bash
 # Find skills directory (skills/, scientific-skills/, etc.)
 gh api repos/<owner>/<repo>/contents --jq '.[].name'
@@ -90,6 +93,7 @@ cp -r /tmp/<repo>/skills/<skill-name> ~/.pi/agent/skills/
 Show matching skills as table: | Repository | Description |
 
 After results, offer:
+
 1. View a specific skill's SKILL.md
 2. Install a skill to `~/.pi/agent/skills/`
 3. Search for different keywords

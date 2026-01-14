@@ -112,12 +112,12 @@ end timeout
 Application("Safari").activate();
 
 // Get frontmost app
-Application("System Events").processes.whose({frontmost: true})[0].name();
+Application("System Events").processes.whose({ frontmost: true })[0].name();
 
 // Display dialog
 const app = Application.currentApplication();
 app.includeStandardAdditions = true;
-app.displayDialog("Hello!", {buttons: ["OK"], defaultButton: "OK"});
+app.displayDialog("Hello!", { buttons: ["OK"], defaultButton: "OK" });
 
 // Run shell command
 app.doShellScript("ls -la");
@@ -125,12 +125,13 @@ app.doShellScript("ls -la");
 // Work with files
 const finder = Application("Finder");
 const desktop = finder.desktop;
-finder.make({new: "folder", at: desktop, withProperties: {name: "Test"}});
+finder.make({ new: "folder", at: desktop, withProperties: { name: "Test" } });
 ```
 
 ## Security Rules
 
 **ALWAYS use `quoted form of` for shell arguments:**
+
 ```applescript
 -- BAD: injection risk
 do shell script "echo " & userInput
@@ -140,12 +141,14 @@ do shell script "echo " & quoted form of userInput
 ```
 
 **NEVER execute with administrator privileges unless explicitly requested:**
+
 ```applescript
 -- Requires user confirmation and password
 do shell script "..." with administrator privileges
 ```
 
 **ASK user before accessing these sensitive apps:**
+
 - Keychain Access, 1Password, Bitwarden (passwords)
 - Terminal, iTerm (can execute arbitrary commands)
 - Mail, Messages (private communications)
@@ -153,6 +156,7 @@ do shell script "..." with administrator privileges
 - System Preferences/Settings
 
 **ASK user before these high-risk operations:**
+
 - Reading UI elements from apps (can expose sensitive data on screen)
 - Sending keystrokes (`keystroke` command)
 - Clicking UI elements in unfamiliar apps
@@ -160,6 +164,7 @@ do shell script "..." with administrator privileges
 - Taking screenshots
 
 **NEVER do these without explicit user request:**
+
 - `keystroke` passwords or sensitive data
 - Read text from password fields
 - Access browser cookies/sessions
@@ -180,10 +185,10 @@ osascript -i
 
 ## Common Issues
 
-| Issue | Solution |
-|-------|----------|
-| "Not authorized" | Grant permissions in System Preferences → Privacy → Automation |
-| "Application not found" | Use exact app name from `/Applications` |
-| "Can't get window 1" | App may have no windows open |
-| Timeout | Use `with timeout of N seconds` block |
-| Quotes in strings | Escape with `\"` or use `quoted form of` |
+| Issue                   | Solution                                                       |
+| ----------------------- | -------------------------------------------------------------- |
+| "Not authorized"        | Grant permissions in System Preferences → Privacy → Automation |
+| "Application not found" | Use exact app name from `/Applications`                        |
+| "Can't get window 1"    | App may have no windows open                                   |
+| Timeout                 | Use `with timeout of N seconds` block                          |
+| Quotes in strings       | Escape with `\"` or use `quoted form of`                       |

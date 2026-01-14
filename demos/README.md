@@ -24,11 +24,11 @@ expect tapes/codesearch.expect
 
 ## Tapes
 
-| Tape | Description |
-|------|-------------|
+| Tape                | Description                                       |
+| ------------------- | ------------------------------------------------- |
 | `codesearch.expect` | Search GitHub code for useEffect cleanup patterns |
-| `websearch.expect` | Search the web for Bun 1.3 features |
-| `webfetch.expect` | Fetch and summarize bun.sh |
+| `websearch.expect`  | Search the web for Bun 1.3 features               |
+| `webfetch.expect`   | Fetch and summarize bun.sh                        |
 
 ## Playback
 

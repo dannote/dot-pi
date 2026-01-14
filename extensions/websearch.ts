@@ -297,9 +297,7 @@ export default function (pi: ExtensionAPI) {
       );
 
       // Determine how many results to show
-      const maxResults = expanded
-        ? results.length
-        : Math.min(PREVIEW_RESULTS, results.length);
+      const maxResults = expanded ? results.length : Math.min(PREVIEW_RESULTS, results.length);
 
       for (let i = 0; i < maxResults; i++) {
         const r = results[i];
@@ -333,9 +331,7 @@ export default function (pi: ExtensionAPI) {
       const hiddenResults = results.length - maxResults;
 
       if (!expanded && hiddenResults > 0) {
-        container.addChild(
-          new Text(theme.fg("dim", `\n... ${hiddenResults} more results`), 0, 0),
-        );
+        container.addChild(new Text(theme.fg("dim", `\n... ${hiddenResults} more results`), 0, 0));
       }
 
       return container;

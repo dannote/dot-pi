@@ -6,7 +6,11 @@
  * workspace diagnostics, call hierarchy, and rust-analyzer specific operations.
  */
 
-import { type ExtensionAPI, getLanguageFromPath, highlightCode } from "@mariozechner/pi-coding-agent";
+import {
+  type ExtensionAPI,
+  getLanguageFromPath,
+  highlightCode,
+} from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 import type {
   CallHierarchyIncomingCall,

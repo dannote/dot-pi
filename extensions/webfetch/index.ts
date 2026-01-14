@@ -232,10 +232,7 @@ export default function (pi: ExtensionAPI) {
         // Show first 4 non-empty lines as preview
         const preview = lines.slice(0, 4).join("\n");
         const hiddenCount = lines.length - 4;
-        const moreInfo =
-          hiddenCount > 0
-            ? theme.fg("dim", `\n... ${hiddenCount} more lines`)
-            : "";
+        const moreInfo = hiddenCount > 0 ? theme.fg("dim", `\n... ${hiddenCount} more lines`) : "";
         return new Text(
           theme.fg("success", "✓") + theme.fg("muted", sizeInfo + "\n" + preview) + moreInfo,
           0,

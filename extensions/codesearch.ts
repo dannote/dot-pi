@@ -323,9 +323,7 @@ export default function (pi: ExtensionAPI) {
       );
 
       // Determine how many results/snippets to show
-      const maxResults = expanded
-        ? results.length
-        : Math.min(PREVIEW_SNIPPETS, results.length);
+      const maxResults = expanded ? results.length : Math.min(PREVIEW_SNIPPETS, results.length);
 
       for (let i = 0; i < maxResults; i++) {
         const r = results[i];
@@ -374,7 +372,10 @@ export default function (pi: ExtensionAPI) {
       if (!expanded && (hiddenResults > 0 || totalSnippets > maxResults)) {
         container.addChild(
           new Text(
-            theme.fg("dim", `\n... ${hiddenResults} more repos, ${totalSnippets - maxResults} more snippets`),
+            theme.fg(
+              "dim",
+              `\n... ${hiddenResults} more repos, ${totalSnippets - maxResults} more snippets`,
+            ),
             0,
             0,
           ),
