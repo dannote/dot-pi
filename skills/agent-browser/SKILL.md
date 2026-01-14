@@ -141,7 +141,7 @@ Connect to user's actual Chrome browser using the [Playwriter extension](https:/
 ### Setup (one-time)
 
 1. User installs [Playwriter extension](https://chromewebstore.google.com/detail/playwriter-mcp/jfeammnjpkecdekppnclgkkffahnhfhe)
-2. User starts the relay: `bunx playwriter serve`
+2. User starts the relay: `bunx playwriter` (starts CDP relay automatically)
 3. User clicks Playwriter icon on tabs to control (icon turns green)
 
 ### Usage
