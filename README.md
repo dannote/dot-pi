@@ -23,10 +23,11 @@ Extensions, skills, and rules for [Pi](https://github.com/badlogic/pi-mono) codi
 | Skill                     | Description                                                                               | Origin                                                                                                                         |
 | ------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `agent-browser`           | Browser automation with [agent-browser](https://github.com/vercel-labs/agent-browser) CLI | Adapted from [agent-browser docs](https://github.com/vercel-labs/agent-browser)                                                |
+| `ai-news`                 | Curated AI news digest from X/Twitter list (releases, papers, insights)                   | Original                                                                                                                       |
 | `applescript`             | AppleScript and JXA automation for macOS                                                  | Adapted from [claude-skills-generator](https://github.com/martinholovsky/claude-skills-generator/tree/main/skills/applescript) |
+| `bird`                    | X/Twitter CLI for tweets, threads, search, news, and social graph                         | Adapted from [steipete/bird](https://github.com/steipete/bird)                                                                 |
 | `chat-to-skill`           | Convert current chat session into a reusable skill (long-term memory)                     | Original                                                                                                                       |
 | `keyboard-layout-decoder` | Decode text typed with wrong keyboard layout (Russian ↔ English)                          | Original                                                                                                                       |
-
 | `skill-discovery`         | Discover agent skills on GitHub via `gh` CLI                                              | Original                                                                                                                       |
 
 ## Rules
