@@ -274,7 +274,7 @@ export default function (pi: ExtensionAPI) {
       return new Text(text, 0, 0);
     },
 
-    renderResult(result, options, theme) {
+    renderResult(result, { expanded, isPartial }, theme) {
       const details = result.details as WebSearchDetails | undefined;
 
       if (details?.error) {
@@ -285,7 +285,7 @@ export default function (pi: ExtensionAPI) {
       const results = details?.results ?? [];
 
       if (results.length === 0) {
-        if (options.isPartial) return new Text(theme.fg("muted", "Searching..."), 0, 0);
+        if (isPartial) return new Text(theme.fg("muted", "Searching..."), 0, 0);
         return new Text(theme.fg("muted", "No results found."), 0, 0);
       }
 
@@ -297,7 +297,7 @@ export default function (pi: ExtensionAPI) {
       );
 
       // Determine how many results to show
-      const maxResults = options.expanded
+      const maxResults = expanded
         ? results.length
         : Math.min(PREVIEW_RESULTS, results.length);
 
@@ -320,7 +320,7 @@ export default function (pi: ExtensionAPI) {
 
         // Text preview/full
         if (r.text) {
-          const displayText = options.expanded
+          const displayText = expanded
             ? r.text
             : r.text.length > PREVIEW_TEXT_LENGTH
               ? r.text.slice(0, PREVIEW_TEXT_LENGTH) + "..."
@@ -329,16 +329,12 @@ export default function (pi: ExtensionAPI) {
         }
       }
 
-      // Footer with expand/collapse hint
+      // Footer showing hidden count
       const hiddenResults = results.length - maxResults;
 
-      if (options.expanded) {
-        if (results.length > PREVIEW_RESULTS) {
-          container.addChild(new Text(theme.fg("dim", "\n(ctrl+o to collapse)"), 0, 0));
-        }
-      } else if (hiddenResults > 0) {
+      if (!expanded && hiddenResults > 0) {
         container.addChild(
-          new Text(theme.fg("dim", `\n... ${hiddenResults} more results (ctrl+o to expand)`), 0, 0),
+          new Text(theme.fg("dim", `\n... ${hiddenResults} more results`), 0, 0),
         );
       }
 

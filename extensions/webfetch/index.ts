@@ -214,7 +214,7 @@ export default function (pi: ExtensionAPI) {
       return new Text(text, 0, 0);
     },
 
-    renderResult(result, options, theme) {
+    renderResult(result, { expanded }, theme) {
       const details = result.details as FetchDetails | undefined;
 
       if (details?.error) {
@@ -228,13 +228,13 @@ export default function (pi: ExtensionAPI) {
       const lines = fullText.split("\n").filter(Boolean);
       const sizeInfo = details?.size ? ` (${formatSize(details.size)})` : "";
 
-      if (!options.expanded) {
+      if (!expanded) {
         // Show first 4 non-empty lines as preview
         const preview = lines.slice(0, 4).join("\n");
         const hiddenCount = lines.length - 4;
         const moreInfo =
           hiddenCount > 0
-            ? theme.fg("dim", `\n... ${hiddenCount} more lines (ctrl+o to expand)`)
+            ? theme.fg("dim", `\n... ${hiddenCount} more lines`)
             : "";
         return new Text(
           theme.fg("success", "✓") + theme.fg("muted", sizeInfo + "\n" + preview) + moreInfo,
@@ -243,8 +243,7 @@ export default function (pi: ExtensionAPI) {
         );
       }
 
-      const collapseHint = lines.length > 4 ? theme.fg("dim", "\n(ctrl+o to collapse)") : "";
-      return new Text(fullText + collapseHint, 0, 0);
+      return new Text(fullText, 0, 0);
     },
   });
 }
