@@ -1,0 +1,16 @@
+{
+  "name": "pi-extension-lsp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "cli-highlight": "^2.1.11",
+    "glob": "^11.0.3",
+    "vscode-languageserver-types": "^3.17.5"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

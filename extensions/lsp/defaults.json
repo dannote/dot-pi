@@ -1,0 +1,183 @@
+{
+  "rust-analyzer": {
+    "command": "rust-analyzer",
+    "args": [],
+    "fileTypes": [".rs"],
+    "rootMarkers": ["Cargo.toml", "rust-analyzer.toml"],
+    "initOptions": {
+      "checkOnSave": { "command": "clippy" },
+      "cargo": { "allFeatures": true },
+      "procMacro": { "enable": true }
+    },
+    "capabilities": {
+      "flycheck": true,
+      "ssr": true,
+      "expandMacro": true,
+      "runnables": true,
+      "relatedTests": true
+    }
+  },
+  "typescript-language-server": {
+    "command": "typescript-language-server",
+    "args": ["--stdio"],
+    "fileTypes": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"],
+    "rootMarkers": ["package.json", "tsconfig.json", "jsconfig.json"]
+  },
+  "gopls": {
+    "command": "gopls",
+    "args": ["serve"],
+    "fileTypes": [".go", ".mod", ".sum"],
+    "rootMarkers": ["go.mod", "go.work", "go.sum"]
+  },
+  "pyright": {
+    "command": "pyright-langserver",
+    "args": ["--stdio"],
+    "fileTypes": [".py", ".pyi"],
+    "rootMarkers": ["pyproject.toml", "pyrightconfig.json", "setup.py", "requirements.txt"]
+  },
+  "clangd": {
+    "command": "clangd",
+    "args": ["--background-index", "--clang-tidy"],
+    "fileTypes": [".c", ".cpp", ".cc", ".cxx", ".h", ".hpp", ".hxx", ".m", ".mm"],
+    "rootMarkers": ["compile_commands.json", "CMakeLists.txt", ".clangd", "Makefile"]
+  },
+  "zls": {
+    "command": "zls",
+    "args": [],
+    "fileTypes": [".zig"],
+    "rootMarkers": ["build.zig", "build.zig.zon"]
+  },
+  "biome": {
+    "command": "biome",
+    "args": ["lsp-proxy"],
+    "fileTypes": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json", ".jsonc"],
+    "rootMarkers": ["biome.json", "biome.jsonc"],
+    "isLinter": true
+  },
+  "denols": {
+    "command": "deno",
+    "args": ["lsp"],
+    "fileTypes": [".ts", ".tsx", ".js", ".jsx"],
+    "rootMarkers": ["deno.json", "deno.jsonc", "deno.lock"]
+  },
+  "svelte": {
+    "command": "svelteserver",
+    "args": ["--stdio"],
+    "fileTypes": [".svelte"],
+    "rootMarkers": ["svelte.config.js", "svelte.config.mjs", "package.json"]
+  },
+  "vue-language-server": {
+    "command": "vue-language-server",
+    "args": ["--stdio"],
+    "fileTypes": [".vue"],
+    "rootMarkers": ["vue.config.js", "nuxt.config.js", "nuxt.config.ts", "package.json"]
+  },
+  "astro": {
+    "command": "astro-ls",
+    "args": ["--stdio"],
+    "fileTypes": [".astro"],
+    "rootMarkers": ["astro.config.mjs", "astro.config.js", "astro.config.ts"]
+  },
+  "solargraph": {
+    "command": "solargraph",
+    "args": ["stdio"],
+    "fileTypes": [".rb", ".rake", ".gemspec"],
+    "rootMarkers": ["Gemfile", ".solargraph.yml", "Rakefile"]
+  },
+  "lua-language-server": {
+    "command": "lua-language-server",
+    "args": [],
+    "fileTypes": [".lua"],
+    "rootMarkers": [".luarc.json", ".luarc.jsonc", ".luacheckrc"]
+  },
+  "intelephense": {
+    "command": "intelephense",
+    "args": ["--stdio"],
+    "fileTypes": [".php", ".phtml"],
+    "rootMarkers": ["composer.json", "composer.lock"]
+  },
+  "bashls": {
+    "command": "bash-language-server",
+    "args": ["start"],
+    "fileTypes": [".sh", ".bash", ".zsh"],
+    "rootMarkers": [".git"]
+  },
+  "yamlls": {
+    "command": "yaml-language-server",
+    "args": ["--stdio"],
+    "fileTypes": [".yaml", ".yml"],
+    "rootMarkers": [".git"]
+  },
+  "dockerls": {
+    "command": "docker-langserver",
+    "args": ["--stdio"],
+    "fileTypes": [".dockerfile", "Dockerfile"],
+    "rootMarkers": ["Dockerfile", "docker-compose.yml", "docker-compose.yaml"]
+  },
+  "terraformls": {
+    "command": "terraform-ls",
+    "args": ["serve"],
+    "fileTypes": [".tf", ".tfvars"],
+    "rootMarkers": [".terraform", "terraform.tfstate", "*.tf"]
+  },
+  "nixd": {
+    "command": "nixd",
+    "args": [],
+    "fileTypes": [".nix"],
+    "rootMarkers": ["flake.nix", "default.nix", "shell.nix"]
+  },
+  "dartls": {
+    "command": "dart",
+    "args": ["language-server", "--protocol=lsp"],
+    "fileTypes": [".dart"],
+    "rootMarkers": ["pubspec.yaml", "pubspec.lock"]
+  },
+  "hls": {
+    "command": "haskell-language-server-wrapper",
+    "args": ["--lsp"],
+    "fileTypes": [".hs", ".lhs"],
+    "rootMarkers": ["stack.yaml", "cabal.project", "hie.yaml", "*.cabal"]
+  },
+  "ocamllsp": {
+    "command": "ocamllsp",
+    "args": [],
+    "fileTypes": [".ml", ".mli", ".mll", ".mly"],
+    "rootMarkers": ["dune-project", "dune-workspace", "*.opam"]
+  },
+  "elixirls": {
+    "command": "elixir-ls",
+    "args": [],
+    "fileTypes": [".ex", ".exs", ".heex", ".eex"],
+    "rootMarkers": ["mix.exs", "mix.lock"]
+  },
+  "gleam": {
+    "command": "gleam",
+    "args": ["lsp"],
+    "fileTypes": [".gleam"],
+    "rootMarkers": ["gleam.toml"]
+  },
+  "metals": {
+    "command": "metals",
+    "args": [],
+    "fileTypes": [".scala", ".sbt", ".sc"],
+    "rootMarkers": ["build.sbt", "build.sc", "build.gradle", "pom.xml"]
+  },
+  "kotlin-language-server": {
+    "command": "kotlin-language-server",
+    "args": [],
+    "fileTypes": [".kt", ".kts"],
+    "rootMarkers": ["build.gradle", "build.gradle.kts", "pom.xml"]
+  },
+  "jdtls": {
+    "command": "jdtls",
+    "args": [],
+    "fileTypes": [".java"],
+    "rootMarkers": ["pom.xml", "build.gradle", "build.gradle.kts", ".project"]
+  },
+  "omnisharp": {
+    "command": "omnisharp",
+    "args": ["-z", "--hostPID", "$PID", "--encoding", "utf-8", "--languageserver"],
+    "fileTypes": [".cs", ".csx"],
+    "rootMarkers": ["*.sln", "*.csproj", "omnisharp.json"]
+  }
+}
