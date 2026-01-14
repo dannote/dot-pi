@@ -21,6 +21,31 @@ Find agent skills on GitHub using `gh` CLI. Skills work across multiple harnesse
 gh search repos --topic=claude-skills --sort=stars --limit=30 --json fullName,description
 gh search repos --topic=codex-skills --sort=stars --limit=20 --json fullName,description
 gh search repos --topic=gemini-skills --sort=stars --limit=20 --json fullName,description
+gh search repos --topic=skill-md --sort=stars --limit=20 --json fullName,description
+gh search repos --topic=agent-skills --sort=stars --limit=20 --json fullName,description
+gh search repos --topic=claude-code-skills --sort=stars --limit=20 --json fullName,description
+gh search repos --topic=gemini-cli-skills --sort=stars --limit=20 --json fullName,description
+```
+
+## Find repos with SKILL.md files
+
+Search GitHub code for actual SKILL.md files (finds repos not tagged with topics):
+```bash
+# Find repos containing SKILL.md files, then fetch stars via GraphQL (single query)
+repos=$(gh search code "filename:SKILL.md" --limit=50 --json repository | jq -r '.[].repository.nameWithOwner' | sort -u)
+
+# Build GraphQL query to get stars for all repos at once
+query="{ "
+i=0
+for repo in $repos; do
+  owner="${repo%/*}"
+  name="${repo#*/}"
+  query+="r$i: repository(owner: \"$owner\", name: \"$name\") { nameWithOwner stargazerCount description } "
+  ((i++))
+done
+query+="}"
+
+gh api graphql -f query="$query" --jq '.data | to_entries[] | "\(.value.nameWithOwner) ★\(.value.stargazerCount) - \(.value.description // "no desc")"' | sort -t'★' -k2 -rn
 ```
 
 ## Build catalog from awesome lists
