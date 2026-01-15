@@ -8,6 +8,7 @@ Extensions, skills, and rules for [Pi](https://github.com/badlogic/pi-mono) codi
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `codesearch.ts`          | Search public GitHub code via [grep.app](https://grep.app) MCP API                                                                 | Original                                                                                                                                         |
 | `confirm-destructive.ts` | Confirm before clearing session or switching with unsaved work                                                                     | Based on [pi-mono example](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions/confirm-destructive.ts)       |
+| `env-json.ts`            | Load environment variables from `~/.pi/agent/env.json` into bash commands                                                          | Original                                                                                                                                         |
 | `lsp/`                   | Language Server Protocol for code intelligence (definition, references, hover, diagnostics, rename, etc.)                          | Based on [oh-my-pi](https://github.com/can1357/oh-my-pi/tree/41fed50e5861cfa8bac505cf3eb238f55b228ae8/packages/coding-agent/src/core/tools/lsp)  |
 | `plan-mode/`             | Read-only plan mode toggle + safe bash allowlist + optional step tracking                                                          | Based on [pi-mono example](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions/plan-mode)                    |
 | `notify.ts`              | Send desktop notifications on task completion (OSC 777/9)                                                                          | Based on [pi-mono example](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions/notify.ts)                    |
@@ -38,6 +39,7 @@ Extensions, skills, and rules for [Pi](https://github.com/badlogic/pi-mono) codi
 | `comments.md`        | Comment policy — avoid redundant comments               |
 | `commit-messages.md` | Follow existing repo commit style                       |
 | `delete-files.md`    | Use `rm -f` to delete files                             |
+| `pull-requests.md`   | PR workflow: study templates, check user's style, preview before submit |
 | `typescript.md`      | TypeScript naming, type safety, imports, async patterns |
 
 ## Installation
