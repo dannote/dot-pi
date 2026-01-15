@@ -23,9 +23,11 @@ Fetch and curate important AI news from the user's X/Twitter AI list.
 ## Commands
 
 ```bash
-# Fetch 200 tweets as JSON
-bunx @steipete/bird list-timeline 1894700501725229467 -n 200 --json
+# X API is flaky with large requests, use -n 50 max
+bunx @steipete/bird list-timeline 1894700501725229467 -n 50 --json
 ```
+
+Filter by `createdAt` for last 24 hours. If more tweets needed, use `--cursor` from previous response.
 
 ## Filtering Criteria
 
