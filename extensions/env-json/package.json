@@ -1,0 +1,12 @@
+{
+  "name": "env-json",
+  "private": true,
+  "dependencies": {
+    "jsonc-parser": "^3.3.1"
+  },
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
