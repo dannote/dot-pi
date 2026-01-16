@@ -7,6 +7,9 @@
  * Requires:
  * - ELEVENLABS_API_KEY in env
  * - sox installed: `brew install sox` (macOS) or `apt install sox` (Linux)
+ *
+ * Optional:
+ * - ELEVENLABS_LANGUAGE - ISO-639-1/3 language code (e.g., "en", "ru", "de")
  */
 
 import { CustomEditor, type ExtensionAPI, type ExtensionContext, type KeybindingsManager, type Theme } from "@mariozechner/pi-coding-agent";
@@ -18,6 +21,10 @@ import { join } from "path";
 
 function getApiKey(): string | undefined {
 	return process.env.ELEVENLABS_API_KEY;
+}
+
+function getLanguageCode(): string | undefined {
+	return process.env.ELEVENLABS_LANGUAGE;
 }
 
 interface TranscriptionResponse {
@@ -35,6 +42,11 @@ async function transcribeAudio(audioPath: string): Promise<string> {
 	const formData = new FormData();
 	formData.append("model_id", "scribe_v1");
 	formData.append("file", new Blob([audioData]), "recording.wav");
+
+	const languageCode = getLanguageCode();
+	if (languageCode) {
+		formData.append("language_code", languageCode);
+	}
 
 	const response = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
 		method: "POST",
