@@ -14,6 +14,7 @@ import {
 	type AutocompleteProvider,
 	CombinedAutocompleteProvider,
 	type EditorTheme,
+	type TUI,
 } from "@mariozechner/pi-tui";
 import { spawnSync } from "child_process";
 import { type Dirent, readdirSync, statSync } from "fs";
@@ -279,8 +280,8 @@ class BashCompletionEditor extends CustomEditor {
 	private bashProvider: BashCompletionAutocompleteProvider | null = null;
 	private shellPath: string;
 
-	constructor(theme: EditorTheme, keybindings: KeybindingsManager, shellPath: string = "bash") {
-		super(theme, keybindings);
+	constructor(tui: TUI, theme: EditorTheme, keybindings: KeybindingsManager, shellPath: string = "bash") {
+		super(tui, theme, keybindings);
 		this.shellPath = shellPath;
 	}
 
@@ -308,8 +309,8 @@ export default function (pi: ExtensionAPI) {
 	const shellPath = getShellPath();
 
 	pi.on("session_start", (_event, ctx) => {
-		ctx.ui.setEditorComponent((_tui, theme, keybindings) => {
-			return new BashCompletionEditor(theme, keybindings, shellPath);
+		ctx.ui.setEditorComponent((tui, theme, keybindings) => {
+			return new BashCompletionEditor(tui, theme, keybindings, shellPath);
 		});
 	});
 }
