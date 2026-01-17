@@ -1,0 +1,26 @@
+#!/usr/bin/expect -f
+set timeout 60
+set env(PI_SKIP_VERSION_CHECK) 1
+
+proc type_slow {text {delay 40}} {
+    foreach char [split $text ""] {
+        send -- $char
+        after $delay
+    }
+}
+
+spawn asciinema rec --overwrite --idle-time-limit 2 --window-size 80x24 -c pi recordings/voice-input.cast
+
+expect "Sandbox"
+
+# Press Ctrl+R to start recording
+send "\x12"
+
+# Wait for user to speak and stop recording
+sleep 10
+
+send "\x03"
+sleep 0.3
+send "\x03"
+
+expect eof
