@@ -1,8 +1,8 @@
 /**
  * Rules Extension
  *
- * Scans ~/.pi/agent/rules/ for rule files and lists them in the system prompt.
- * The agent can then use the read tool to load specific rules when needed.
+ * Scans ~/.pi/agent/rules/ for rule files and loads their content into the system prompt.
+ * Rules are eagerly loaded for better adherence.
  */
 
 import * as fs from "node:fs";
@@ -12,11 +12,17 @@ import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Text } from "@mariozechner/pi-tui";
 
+type RuleFile = {
+  relativePath: string;
+  fullPath: string;
+  content: string;
+};
+
 /**
- * Recursively find all .md files in a directory
+ * Recursively find all .md files in a directory and load their content
  */
-function findMarkdownFiles(dir: string, basePath: string = ""): string[] {
-  const results: string[] = [];
+function loadRuleFiles(dir: string, basePath: string = ""): RuleFile[] {
+  const results: RuleFile[] = [];
 
   if (!fs.existsSync(dir)) {
     return results;
@@ -42,9 +48,14 @@ function findMarkdownFiles(dir: string, basePath: string = ""): string[] {
     }
 
     if (isDirectory) {
-      results.push(...findMarkdownFiles(fullPath, relativePath));
+      results.push(...loadRuleFiles(fullPath, relativePath));
     } else if (isFile && entry.name.endsWith(".md")) {
-      results.push(relativePath);
+      try {
+        const content = fs.readFileSync(fullPath, "utf-8");
+        results.push({ relativePath, fullPath, content });
+      } catch {
+        // Skip files that can't be read
+      }
     }
   }
 
@@ -66,7 +77,7 @@ function isRulesListMessage(message: AgentMessage): boolean {
 }
 
 export default function rulesExtension(pi: ExtensionAPI) {
-  let ruleFiles: string[] = [];
+  let ruleFiles: RuleFile[] = [];
   const rulesDir = path.join(os.homedir(), ".pi", "agent", "rules");
 
   pi.registerMessageRenderer<RulesMessageDetails>(RULES_MESSAGE_TYPE, (message, _options, theme) => {
@@ -81,13 +92,13 @@ export default function rulesExtension(pi: ExtensionAPI) {
     };
   });
 
-  // Scan for rules on session start
+  // Scan and load rules on session start
   pi.on("session_start", async (_event, ctx) => {
-    ruleFiles = findMarkdownFiles(rulesDir);
+    ruleFiles = loadRuleFiles(rulesDir);
 
     if (ruleFiles.length > 0) {
       if (ctx.hasUI) {
-        const files = ruleFiles.map((file) => path.join(rulesDir, file));
+        const files = ruleFiles.map((rule) => rule.fullPath);
         pi.sendMessage({
           customType: RULES_MESSAGE_TYPE,
           content: "Loaded rules",
@@ -96,31 +107,26 @@ export default function rulesExtension(pi: ExtensionAPI) {
         });
       }
 
-      ctx.ui.notify(`Found ${ruleFiles.length} rule(s) in ~/.pi/agent/rules/`, "info");
+      ctx.ui.notify(`Loaded ${ruleFiles.length} rule(s) from ~/.pi/agent/rules/`, "info");
     }
   });
 
-  // Append available rules to system prompt
+  // Prepend rules content to system prompt (before AGENTS.md context)
   pi.on("before_agent_start", async (event) => {
     if (ruleFiles.length === 0) {
       return;
     }
 
-    const rulesList = ruleFiles.map((f) => `- ${rulesDir}/${f}`).join("\n");
+    // Build rules content matching opencode/Claude Code format
+    const rulesContent = ruleFiles
+      .map((rule) => `Instructions from: ${rule.fullPath}\n${rule.content}`)
+      .join("\n\n");
 
+    // Prepend to system prompt so rules come before project context
     return {
-      systemPrompt:
-        event.systemPrompt +
-        `
+      systemPrompt: `${rulesContent}
 
-## Global Rules
-
-The following global rules are available in ~/.pi/agent/rules/:
-
-${rulesList}
-
-When working on tasks related to these rules, use the read tool to load the relevant rule files for guidance.
-`,
+${event.systemPrompt}`,
     };
   });
 }
