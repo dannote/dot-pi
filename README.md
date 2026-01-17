@@ -4,9 +4,8 @@ Extensions, skills, and rules for [Pi](https://github.com/badlogic/pi-mono) codi
 
 ## Demos
 
-| | |
+| Code Search | LSP |
 |---|---|
-| **Code Search** | **LSP** |
 | <a href="https://asciinema.org/a/HsHEscCk5Fq7s6Ym"><img src="https://asciinema.org/a/HsHEscCk5Fq7s6Ym.svg" width="400"></a> | <a href="https://asciinema.org/a/0cG65zf3s94wFSdt"><img src="https://asciinema.org/a/0cG65zf3s94wFSdt.svg" width="400"></a> |
 | **Question** | **Web Fetch** |
 | <a href="https://asciinema.org/a/E48GyE7AE3FRuk6U"><img src="https://asciinema.org/a/E48GyE7AE3FRuk6U.svg" width="400"></a> | <a href="https://asciinema.org/a/9oRM5g9BHrv00GnD"><img src="https://asciinema.org/a/9oRM5g9BHrv00GnD.svg" width="400"></a> |
