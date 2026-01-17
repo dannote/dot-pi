@@ -280,8 +280,9 @@ class BashCompletionEditor extends CustomEditor {
 	private bashProvider: BashCompletionAutocompleteProvider | null = null;
 	private shellPath: string;
 
-	constructor(_tui: TUI, theme: EditorTheme, keybindings: KeybindingsManager, shellPath: string = "bash") {
-		super(theme, keybindings);
+	// Fix for pi 0.48.0+: CustomEditor constructor now requires TUI as first argument
+	constructor(tui: TUI, theme: EditorTheme, keybindings: KeybindingsManager, shellPath: string = "bash") {
+		super(tui, theme, keybindings);
 		this.shellPath = shellPath;
 	}
 
