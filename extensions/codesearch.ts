@@ -100,50 +100,76 @@ const CodeSearchParamsSchema = Type.Object({
   ),
 });
 
+const FIELD_PATTERN = /^(Repository|Path|URL|License):\s*(.*)$/;
+const SNIPPET_HEADER = /^--- Snippet \d+ \(Line (\d+)\) ---$/;
+
 /**
- * Parse the raw API response text into structured results
+ * Parse grep.app API response into structured results.
+ * State machine handles multiline code snippets.
  */
 function parseResults(rawText: string): SearchResult[] {
   const results: SearchResult[] = [];
-  // Split by "Repository:" to get individual results
-  const chunks = rawText.split(/(?=^Repository:)/m).filter(Boolean);
 
-  for (const chunk of chunks) {
-    const repoMatch = chunk.match(/^Repository:\s*(.+)$/m);
-    const pathMatch = chunk.match(/^Path:\s*(.+)$/m);
-    const urlMatch = chunk.match(/^URL:\s*(.+)$/m);
-    const licenseMatch = chunk.match(/^License:\s*(.+)$/m);
+  let record: Partial<SearchResult> & { snippets: CodeSnippet[] } = { snippets: [] };
+  let snippet: number | null = null;
+  let snippetLines: string[] = [];
 
-    if (!repoMatch || !pathMatch) continue;
+  const flushSnippet = () => {
+    if (snippet !== null) {
+      record.snippets.push({
+        lineNumber: snippet,
+        code: snippetLines.join("\n").trim(),
+      });
+      snippet = null;
+      snippetLines = [];
+    }
+  };
 
-    const snippets: CodeSnippet[] = [];
-    // Match snippet headers and their code
-    const snippetRegex = /--- Snippet \d+ \(Line (\d+)\) ---\n([\s\S]*?)(?=\n--- Snippet|\n\n$|$)/g;
-    let match;
-    while ((match = snippetRegex.exec(chunk)) !== null) {
-      const lineNum = match[1];
-      const code = match[2];
-      if (lineNum && code) {
-        snippets.push({
-          lineNumber: parseInt(lineNum, 10),
-          code: code.trim(),
-        });
-      }
+  const emit = () => {
+    flushSnippet();
+    if (record.repo && record.path) {
+      results.push({
+        repo: record.repo,
+        path: record.path,
+        url: record.url || "",
+        license: record.license || "Unknown",
+        snippets: record.snippets,
+      });
+    }
+    record = { snippets: [] };
+  };
+
+  for (const line of rawText.split("\n")) {
+    const snippetMatch = line.match(SNIPPET_HEADER);
+    if (snippetMatch) {
+      flushSnippet();
+      snippet = parseInt(snippetMatch[1]!, 10);
+      continue;
     }
 
-    const repo = repoMatch[1];
-    const path = pathMatch[1];
-    if (!repo || !path) continue;
+    const fieldMatch = line.match(FIELD_PATTERN);
+    if (fieldMatch) {
+      const [, name, value] = fieldMatch;
 
-    results.push({
-      repo: repo.trim(),
-      path: path.trim(),
-      url: urlMatch?.[1]?.trim() ?? "",
-      license: licenseMatch?.[1]?.trim() ?? "Unknown",
-      snippets,
-    });
+      if (name === "Repository") {
+        emit();
+      } else {
+        flushSnippet();
+      }
+
+      if (name === "Repository") record.repo = value!.trim();
+      else if (name === "Path") record.path = value!.trim();
+      else if (name === "URL") record.url = value!.trim();
+      else if (name === "License") record.license = value!.trim();
+      continue;
+    }
+
+    if (snippet !== null) {
+      snippetLines.push(line);
+    }
   }
 
+  emit();
   return results;
 }
 
