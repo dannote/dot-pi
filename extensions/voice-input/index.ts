@@ -1,7 +1,7 @@
 /**
  * Voice Input Extension
  *
- * Press Ctrl+R to record audio, which is transcribed via ElevenLabs
+ * Press Ctrl+R to record audio, which is transcribed via ElevenLabs (or custom endpoint)
  * in real-time and sent as a user message to the agent.
  *
  * Requires:
@@ -9,6 +9,7 @@
  * - sox installed: `brew install sox` (macOS) or `apt install sox` (Linux)
  *
  * Optional:
+ * - ELEVENLABS_ENDPOINT - custom WebSocket endpoint (optional, defaults to ElevenLabs)
  * - ELEVENLABS_LANGUAGE - ISO-639-1/3 language code (e.g., "en", "ru", "de")
  */
 
@@ -19,6 +20,10 @@ import WebSocket from "ws";
 
 function getApiKey(): string | undefined {
 	return process.env.ELEVENLABS_API_KEY;
+}
+
+function getEndpoint(): string | undefined {
+    return process.env.ELEVENLABS_ENDPOINT;
 }
 
 function getLanguageCode(): string | undefined {
@@ -137,33 +142,39 @@ function startRealtimeRecording(
 	onTranscript: (text: string, isFinal: boolean) => void,
 	onError: (error: string) => void,
 ): void {
+	const customEndpoint = getEndpoint();
+
+	// For custom endpoints, API key is optional
 	const apiKey = getApiKey();
-	if (!apiKey) {
+	if (!apiKey && !customEndpoint) {
 		onError("ELEVENLABS_API_KEY not set");
 		return;
 	}
 
 	currentTranscript = "";
 
-	// Build WebSocket URL with query params
-	const params = new URLSearchParams({
-		model_id: "scribe_v2_realtime",
-		sample_rate: "16000",
-		audio_format: "pcm_16000",
-	});
+	let wsUrl: string;
+	let headers: Record<string, string> = {};
 
-	const languageCode = getLanguageCode();
-	if (languageCode) {
-		params.set("language_code", languageCode);
-	}
+    // Build WebSocket URL with query params
+    const params = new URLSearchParams({
+        model_id: "scribe_v2_realtime",
+        sample_rate: "16000",
+        audio_format: "pcm_16000",
+    });
 
-	const wsUrl = `wss://api.elevenlabs.io/v1/speech-to-text/realtime?${params.toString()}`;
+    const languageCode = getLanguageCode();
+    if (languageCode) {
+        params.set("language_code", languageCode);
+    }
 
-	ws = new WebSocket(wsUrl, {
-		headers: {
-			"xi-api-key": apiKey,
-		},
-	});
+    const endpoint = customEndpoint ?? `wss://api.elevenlabs.io/v1/speech-to-text/realtime`
+    wsUrl = `${endpoint}?${params.toString()}`;
+    headers = {
+        "xi-api-key": apiKey!,
+    };
+
+	ws = new WebSocket(wsUrl, { headers });
 
 	ws.on("open", () => {
 		// Start timer
@@ -321,7 +332,7 @@ export default function (pi: ExtensionAPI) {
 	}
 
 	pi.on("session_start", (_event, ctx) => {
-		if (!getApiKey()) {
+		if (!getApiKey() && !getEndpoint()) {
 			ctx.ui.notify("Voice input disabled: missing ELEVENLABS_API_KEY", "warning");
 		}
 
@@ -368,7 +379,11 @@ export default function (pi: ExtensionAPI) {
 		description: "Record voice input",
 		handler: async (ctx) => {
 			if (!ctx.hasUI) return;
-			if (!getApiKey()) {
+
+			const customEndpoint = getEndpoint();
+			const apiKey = getApiKey();
+
+			if (!customEndpoint && !apiKey) {
 				ctx.ui.notify("ELEVENLABS_API_KEY not set", "error");
 				return;
 			}
