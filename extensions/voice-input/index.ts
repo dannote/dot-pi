@@ -96,7 +96,6 @@ function stopBlinking() {
  */
 class VoiceInputEditor extends CustomEditor {
 	constructor(tui: TUI, theme: EditorTheme, keybindings: KeybindingsManager) {
-		// @ts-expect-error - dev version requires tui, published version doesn't
 		super(tui, theme, keybindings);
 	}
 

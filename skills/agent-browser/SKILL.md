@@ -5,7 +5,7 @@ description: Automates browser interactions for web testing, form filling, scree
 
 # Browser Automation with agent-browser
 
-> **Note:** Use `bunx @dannote/agent-browser` instead of `agent-browser` for latest features (screenshot refs, get styles).
+> **Note:** For screenshot with @refs support, use `bunx @dannote/agent-browser` until PR #141 is merged into upstream.
 
 ## Quick start
 

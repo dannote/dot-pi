@@ -8,7 +8,7 @@
  * Usage: Symlink or copy to ~/.pi/agent/extensions/
  */
 
-import { CustomEditor, type ExtensionAPI, type KeybindingsManager } from "@mariozechner/pi-coding-agent";
+import { CustomEditor, type ExtensionAPI, getShellConfig, type KeybindingsManager } from "@mariozechner/pi-coding-agent";
 import {
 	type AutocompleteItem,
 	type AutocompleteProvider,
@@ -296,18 +296,8 @@ class BashCompletionEditor extends CustomEditor {
 	}
 }
 
-// TODO: Use getShellConfig() from @mariozechner/pi-coding-agent when exported
-// Currently it's internal in utils/shell.ts
-function getShellPath(): string {
-	const shell = process.env.SHELL;
-	if (shell && shell.includes("bash")) {
-		return shell;
-	}
-	return "bash";
-}
-
 export default function (pi: ExtensionAPI) {
-	const shellPath = getShellPath();
+	const { shell: shellPath } = getShellConfig();
 
 	pi.on("session_start", (_event, ctx) => {
 		ctx.ui.setEditorComponent((tui, theme, keybindings) => {

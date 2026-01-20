@@ -5,13 +5,10 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { homedir } from "node:os";
 import { parse } from "jsonc-parser";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import { type ExtensionAPI, getAgentDir } from "@mariozechner/pi-coding-agent";
 
-// TODO: Use getAgentDir() from @mariozechner/pi-coding-agent when PR #749 is merged
-// https://github.com/badlogic/pi-mono/pull/749
-const agentDir = process.env.PI_CODING_AGENT_DIR || join(homedir(), ".pi", "agent");
+const agentDir = getAgentDir();
 
 export default function (pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {

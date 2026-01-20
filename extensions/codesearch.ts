@@ -9,6 +9,7 @@ import {
   type ExtensionAPI,
   getLanguageFromPath,
   highlightCode,
+  rawKeyHint,
   type Theme,
 } from "@mariozechner/pi-coding-agent";
 import { Container, Text } from "@mariozechner/pi-tui";
@@ -185,11 +186,7 @@ function formatResultsAsText(results: SearchResult[]): string {
     .join("\n\n---\n\n");
 }
 
-// TODO: Import keyHint from pi-coding-agent when merged
-// https://github.com/badlogic/pi-mono/pull/802
-function keyHint(theme: Theme, key: string, description: string): string {
-  return theme.fg("dim", key) + theme.fg("muted", ` ${description}`);
-}
+
 
 export default function (pi: ExtensionAPI) {
   pi.registerTool({
@@ -405,7 +402,7 @@ export default function (pi: ExtensionAPI) {
       if (!expanded && (hiddenResults > 0 || totalSnippets > maxResults)) {
         const more = `${hiddenResults} more repos, ${totalSnippets - maxResults} more snippets`;
         container.addChild(
-          new Text(theme.fg("dim", `\n... ${more}, `) + keyHint(theme, "ctrl+o", "to expand"), 0, 0),
+          new Text(theme.fg("dim", `\n... ${more}, `) + rawKeyHint("ctrl+o", "to expand"), 0, 0),
         );
       }
 

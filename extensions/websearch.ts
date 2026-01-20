@@ -5,7 +5,7 @@
  * Provides real-time web search with configurable crawling modes.
  */
 
-import { type ExtensionAPI, type Theme } from "@mariozechner/pi-coding-agent";
+import { type ExtensionAPI, type Theme, rawKeyHint } from "@mariozechner/pi-coding-agent";
 import { Container, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 
@@ -95,11 +95,7 @@ const WebSearchParamsSchema = Type.Object({
   ),
 });
 
-// TODO: Import keyHint from pi-coding-agent when merged
-// https://github.com/badlogic/pi-mono/pull/802
-function keyHint(theme: Theme, key: string, description: string): string {
-  return theme.fg("dim", key) + theme.fg("muted", ` ${description}`);
-}
+
 
 const PREVIEW_TEXT_LENGTH = 200;
 const PREVIEW_RESULTS = 2;
@@ -362,7 +358,7 @@ export default function (pi: ExtensionAPI) {
               container.addChild(new Text(theme.fg("dim", truncated), 0, 0));
             } else {
               container.addChild(new Text(theme.fg("dim", r.text.slice(0, PREVIEW_TEXT_LENGTH)), 0, 0));
-              container.addChild(new Text(theme.fg("dim", "\n... ") + keyHint(theme, "ctrl+o", "to expand"), 0, 0));
+              container.addChild(new Text(theme.fg("dim", "\n... ") + rawKeyHint("ctrl+o", "to expand"), 0, 0));
             }
           } else {
             container.addChild(new Text(theme.fg("dim", r.text), 0, 0));
@@ -374,11 +370,11 @@ export default function (pi: ExtensionAPI) {
       const hiddenResults = results.length - maxResults;
       if (!expanded && hiddenResults > 0) {
         container.addChild(
-          new Text(theme.fg("dim", `\n... ${hiddenResults} more results, `) + keyHint(theme, "ctrl+o", "to expand"), 0, 0),
+          new Text(theme.fg("dim", `\n... ${hiddenResults} more results, `) + rawKeyHint("ctrl+o", "to expand"), 0, 0),
         );
       } else if (!expanded && results.some(r => r.text.length > PREVIEW_TEXT_LENGTH)) {
         container.addChild(
-          new Text(theme.fg("dim", "\n") + keyHint(theme, "ctrl+o", "to expand"), 0, 0),
+          new Text(theme.fg("dim", "\n") + rawKeyHint("ctrl+o", "to expand"), 0, 0),
         );
       }
 
