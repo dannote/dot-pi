@@ -126,22 +126,39 @@ function readLogs(name: string, lines: number): string {
   return result.stdout || result.stderr || "";
 }
 
-function getListeningPorts(pid: number): number[] {
+function getChildPids(pid: number): number[] {
   try {
-    const result = spawnSync("lsof", ["-iTCP", "-sTCP:LISTEN", "-P", "-n", "-a", "-p", pid.toString()], {
+    const result = spawnSync("pgrep", ["-P", pid.toString()], {
       encoding: "utf8",
-      timeout: 1000,
+      timeout: 500,
     });
     if (!result.stdout) return [];
-    const ports = new Set<number>();
-    for (const line of result.stdout.split("\n").slice(1)) {
-      const match = line.match(/:(\d+)\s+\(LISTEN\)/);
-      if (match) ports.add(parseInt(match[1], 10));
-    }
-    return [...ports];
+    return result.stdout.trim().split("\n").map((s) => parseInt(s, 10)).filter((n) => n > 0);
   } catch {
     return [];
   }
+}
+
+function getListeningPorts(pid: number): number[] {
+  const pids = [pid, ...getChildPids(pid)];
+  const ports = new Set<number>();
+  
+  for (const p of pids) {
+    try {
+      const result = spawnSync("lsof", ["-iTCP", "-sTCP:LISTEN", "-P", "-n", "-a", "-p", p.toString()], {
+        encoding: "utf8",
+        timeout: 500,
+      });
+      if (!result.stdout) continue;
+      for (const line of result.stdout.split("\n").slice(1)) {
+        const match = line.match(/:(\d+)\s+\(LISTEN\)/);
+        if (match) ports.add(parseInt(match[1], 10));
+      }
+    } catch {
+      continue;
+    }
+  }
+  return [...ports];
 }
 
 function updateStatus(ctx: ExtensionContext) {
@@ -150,40 +167,41 @@ function updateStatus(ctx: ExtensionContext) {
     ctx.ui.setStatus("background", undefined);
     ctx.ui.setWidget("background-logs", undefined);
   } else {
+    const theme = ctx.ui.theme;
     const items = running.map((p) => {
       const ports = getListeningPorts(p.pid);
       if (ports.length > 0) {
-        return `${p.name}:${ports.join(",")}`;
+        return p.name + ":" + theme.fg("accent", ports.join(","));
       }
-      return `${p.name}:${p.pid}`;
+      return p.name;
     }).join(" ");
-    ctx.ui.setStatus("background", `⚙ ${items}`);
+    ctx.ui.setStatus("background", theme.fg("success", "●") + " " + items);
 
-    // Show last few lines of logs from first running process
-    const first = running[0];
-    try {
-      const logs = readLogs(first.name, 3);
-      if (logs.trim()) {
-        ctx.ui.setWidget(
-          "background-logs",
-          (_tui, theme) => {
-            const container = new Container();
-            container.addChild(new DynamicBorder((s) => theme.fg("border", s)));
-            container.addChild(new Text(theme.fg("muted", ` ${first.name} `), 0, 0));
-            for (const line of logs.trim().split("\n")) {
-              container.addChild(new Text(theme.fg("dim", ` ${line}`), 0, 0));
+    // Show last few lines of logs from all running processes
+    ctx.ui.setWidget(
+      "background-logs",
+      (_tui, theme) => {
+        const container = new Container();
+        container.addChild(new DynamicBorder((s) => theme.fg("border", s)));
+        for (const proc of running) {
+          try {
+            const logs = readLogs(proc.name, 2);
+            container.addChild(new Text(theme.fg("muted", ` ${proc.name} `), 0, 0));
+            if (logs.trim()) {
+              for (const line of logs.trim().split("\n")) {
+                container.addChild(new Text(theme.fg("dim", ` ${line}`), 0, 0));
+              }
             }
-            container.addChild(new DynamicBorder((s) => theme.fg("border", s)));
-            return container;
-          },
-          { placement: "belowEditor" },
-        );
-      } else {
-        ctx.ui.setWidget("background-logs", undefined);
-      }
-    } catch {
-      ctx.ui.setWidget("background-logs", undefined);
-    }
+          } catch {
+            container.addChild(new Text(theme.fg("muted", ` ${proc.name} `), 0, 0));
+            container.addChild(new Text(theme.fg("dim", " (no logs)"), 0, 0));
+          }
+        }
+        container.addChild(new DynamicBorder((s) => theme.fg("border", s)));
+        return container;
+      },
+      { placement: "belowEditor" },
+    );
   }
 }
 
