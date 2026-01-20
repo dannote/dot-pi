@@ -13,6 +13,10 @@ import { Type } from "@sinclair/typebox";
 
 const API_BASE = "https://context7.com/api";
 
+function getApiKey(): string | undefined {
+  return process.env.CONTEXT7_API_KEY;
+}
+
 interface Library {
   id: string;
   title: string;
@@ -115,7 +119,7 @@ export default function (pi: ExtensionAPI) {
     }),
 
     async execute(_toolCallId, params, _onUpdate, ctx) {
-      const apiKey = process.env.CONTEXT7_API_KEY;
+      const apiKey = getApiKey();
       if (!apiKey) {
         return {
           content: [{ type: "text" as const, text: "Error: CONTEXT7_API_KEY not set" }],
@@ -199,7 +203,7 @@ export default function (pi: ExtensionAPI) {
     }),
 
     async execute(_toolCallId, params) {
-      const apiKey = process.env.CONTEXT7_API_KEY;
+      const apiKey = getApiKey();
       if (!apiKey) {
         return {
           content: [{ type: "text" as const, text: "Error: CONTEXT7_API_KEY not set" }],
