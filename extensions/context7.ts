@@ -92,6 +92,9 @@ Examples:
 - libraryName: "next.js", query: "routing" → finds /vercel/next.js
 - libraryName: "express", query: "middleware" → finds /expressjs/express
 
+TIP: If search doesn't find the library, try context7Docs directly with common patterns:
+- org/repo format: "vueuse/vueuse", "tanstack/query", "trpc/trpc"
+
 Returns matching libraries ranked by relevance. Pick the best match based on:
 - Official sources (higher reputation)
 - Code snippet coverage
@@ -99,12 +102,15 @@ Returns matching libraries ranked by relevance. Pick the best match based on:
 
 const DOCS_DESCRIPTION = `Get up-to-date documentation for a library from Context7.
 
-You MUST call context7Resolve first to get the libraryId, unless user provides it directly.
+Call context7Resolve first OR use libraryId directly if you know the org/repo pattern.
 
 Examples:
-- libraryId: "/vercel/next.js", query: "how to use app router"
-- libraryId: "/reactjs/react.dev", query: "useEffect cleanup"
-- libraryId: "/expressjs/express", query: "error handling middleware"
+- libraryId: "vercel/next.js", query: "app router"
+- libraryId: "vueuse/vueuse", query: "useDark dark mode"
+- libraryId: "tanstack/query", query: "useQuery cache"
+- libraryId: "trpc/trpc", query: "createTRPCRouter"
+
+Common pattern: GitHub org/repo format (without leading slash).
 
 Returns relevant documentation snippets with code examples.`;
 
