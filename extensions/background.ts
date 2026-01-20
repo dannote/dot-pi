@@ -6,7 +6,7 @@
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
-import { DynamicBorder } from "@mariozechner/pi-coding-agent";
+import { DynamicBorder, truncateTail } from "@mariozechner/pi-coding-agent";
 import { Container, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 import { spawn, spawnSync } from "child_process";
@@ -138,7 +138,14 @@ function readLogs(projectDir: string, name: string, lines: number): string {
     encoding: "utf8",
   });
 
-  return result.stdout || result.stderr || "";
+  const raw = result.stdout || result.stderr || "";
+  const truncation = truncateTail(raw, { maxLines: lines });
+  
+  if (truncation.truncated) {
+    return `[truncated: showing last ${truncation.outputLines} lines / ${truncation.outputBytes} bytes]\n${truncation.content}`;
+  }
+  
+  return truncation.content;
 }
 
 function getChildPids(pid: number): number[] {
