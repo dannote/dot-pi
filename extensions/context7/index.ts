@@ -11,10 +11,14 @@ import { type ExtensionAPI, rawKeyHint } from "@mariozechner/pi-coding-agent";
 import { Container, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 
-const API_BASE = "https://context7.com/api";
+const DEFAULT_API_BASE = "https://context7.com/api";
 
 function getApiKey(): string | undefined {
   return process.env.CONTEXT7_API_KEY;
+}
+
+function getApiBase(): string {
+  return process.env.CONTEXT7_ENDPOINT_URL || DEFAULT_API_BASE;
 }
 
 interface Library {
@@ -49,7 +53,7 @@ async function searchLibrary(
   libraryName: string,
 ): Promise<SearchResult> {
   const params = new URLSearchParams({ query, libraryName });
-  const response = await fetch(`${API_BASE}/v2/libs/search?${params}`, {
+  const response = await fetch(`${getApiBase()}/v2/libs/search?${params}`, {
     headers: { Authorization: `Bearer ${apiKey}` },
   });
 
@@ -71,7 +75,7 @@ async function getContext(
   // Remove leading slash if present (API expects "org/repo" not "/org/repo")
   const cleanId = libraryId.startsWith("/") ? libraryId.slice(1) : libraryId;
   const params = new URLSearchParams({ query, libraryId: cleanId, type: "txt" });
-  const response = await fetch(`${API_BASE}/v2/context?${params}`, {
+  const response = await fetch(`${getApiBase()}/v2/context?${params}`, {
     headers: { Authorization: `Bearer ${apiKey}` },
   });
 

@@ -14,6 +14,10 @@ function getApiKey(): string | undefined {
   return process.env.EXA_API_KEY;
 }
 
+function getBaseUrl(): string | undefined {
+  return process.env.EXA_ENDPOINT_URL;
+}
+
 interface SearchResult {
   title: string;
   url: string;
@@ -103,7 +107,8 @@ export default function (pi: ExtensionAPI) {
       });
 
       try {
-        const exa = new Exa(apiKey);
+        const baseUrl = getBaseUrl();
+        const exa = baseUrl ? new Exa(apiKey, baseUrl) : new Exa(apiKey);
 
         const response = await exa.searchAndContents(query, {
           numResults,
