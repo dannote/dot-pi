@@ -148,6 +148,17 @@ function readLogs(projectDir: string, name: string, lines: number): string {
   return truncation.content;
 }
 
+function readFullLogs(projectDir: string, name: string): string {
+  const filePrefix = getFilePrefix(projectDir, name);
+  const logFile = `${filePrefix}.log`;
+
+  if (!fs.existsSync(logFile)) {
+    throw new Error(`Log file for "${name}" not found`);
+  }
+
+  return fs.readFileSync(logFile, "utf8");
+}
+
 function getChildPids(pid: number): number[] {
   try {
     const result = spawnSync("pgrep", ["-P", pid.toString()], {
@@ -255,6 +266,54 @@ export default function (pi: ExtensionAPI) {
         stopProcess(ctx.cwd, name);
         updateStatus(ctx);
         ctx.ui.notify(`Stopped "${name}"`, "info");
+      } catch (err) {
+        ctx.ui.notify(err instanceof Error ? err.message : String(err), "error");
+      }
+    },
+  });
+
+  pi.registerCommand("logs", {
+    description: "View full logs from a background process",
+    getArgumentCompletions(prefix) {
+      const processes = listProcesses(process.cwd());
+      if (processes.length === 0) return null;
+      const filtered = prefix
+        ? processes.filter((p) => p.name.toLowerCase().startsWith(prefix.toLowerCase()))
+        : processes;
+      return filtered.map((p) => ({
+        value: p.name,
+        label: p.name,
+        description: p.running ? `PID ${p.pid}` : "stopped",
+      }));
+    },
+    async handler(args, ctx) {
+      const name = args.trim();
+      const processes = listProcesses(ctx.cwd);
+      
+      if (!name) {
+        const running = processes.filter((p) => p.running);
+        if (running.length === 0) {
+          ctx.ui.notify("No background processes running", "info");
+          return;
+        }
+        if (running.length === 1) {
+          const logs = readFullLogs(ctx.cwd, running[0].name);
+          await ctx.ui.editor(`Logs: ${running[0].name}`, logs);
+          return;
+        }
+        ctx.ui.notify("Usage: /logs <process-name>", "info");
+        return;
+      }
+
+      const proc = processes.find((p) => p.name === name);
+      if (!proc) {
+        ctx.ui.notify(`Process "${name}" not found`, "error");
+        return;
+      }
+
+      try {
+        const logs = readFullLogs(ctx.cwd, name);
+        await ctx.ui.editor(`Logs: ${name}`, logs);
       } catch (err) {
         ctx.ui.notify(err instanceof Error ? err.message : String(err), "error");
       }
