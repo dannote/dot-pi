@@ -465,9 +465,9 @@ async function runCritic(
 	log(ctx, debug, "info", `Starting critic with model=${model || "default"}, timeout=${timeoutMs}ms`);
 	log(ctx, debug, "info", `Context length: ${context.length} chars`);
 	if (context.length < 2000) {
-		log(ctx, debug, "debug", `Context:\n${context}`);
+		log(ctx, debug, "info", `Context:\n${context}`);
 	} else {
-		log(ctx, debug, "debug", `Context (first 1000 chars):\n${context.substring(0, 1000)}...`);
+		log(ctx, debug, "info", `Context (first 1000 chars):\n${context.substring(0, 1000)}...`);
 	}
 
 	try {
@@ -499,8 +499,8 @@ async function runCritic(
 			});
 			
 			// Explicitly ref stdout/stderr to keep event loop alive
-			proc.stdout?.ref?.();
-			proc.stderr?.ref?.();
+			(proc.stdout as NodeJS.ReadableStream & { ref?: () => void })?.ref?.();
+			(proc.stderr as NodeJS.ReadableStream & { ref?: () => void })?.ref?.();
 			
 			log(ctx, debug, "info", `Subprocess PID: ${proc.pid}`);
 			let buffer = "";
@@ -632,9 +632,10 @@ async function runCritic(
 		// Parse structured verdict from critic response
 		const verdictMatch = result.critique.match(/<critic_verdict>\s*status:\s*(APPROVED|NEEDS_WORK|BLOCKED)\s*<\/critic_verdict>/i);
 		
-		let status: "APPROVED" | "NEEDS_WORK" | "BLOCKED" = "NEEDS_WORK";
+		type VerdictStatus = "APPROVED" | "NEEDS_WORK" | "BLOCKED";
+		let status: VerdictStatus = "NEEDS_WORK";
 		if (verdictMatch) {
-			status = verdictMatch[1].toUpperCase() as typeof status;
+			status = verdictMatch[1].toUpperCase() as VerdictStatus;
 			// Remove verdict block from displayed critique
 			result.critique = result.critique.replace(/<critic_verdict>[\s\S]*<\/critic_verdict>/i, "").trim();
 		} else {
@@ -642,7 +643,7 @@ async function runCritic(
 			log(ctx, debug, "warn", "Critic response missing <critic_verdict> block, defaulting to NEEDS_WORK");
 		}
 		
-		result.approved = status === "APPROVED";
+		result.approved = (status as VerdictStatus) === "APPROVED";
 		result.status = status;
 
 		logToFile("verdict", {

@@ -11,7 +11,7 @@
  * Set PROVIDER_API_KEY environment variable to enable.
  */
 
-import type { ExtensionAPI } from '@dannote/pi-agent'
+import type { ExtensionAPI } from '@mariozechner/pi-coding-agent'
 
 function getApiKey(): string | undefined {
   return process.env.PROVIDER_API_KEY

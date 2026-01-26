@@ -88,7 +88,7 @@ function listProcesses(projectDir: string): ProcessInfo[] {
       const logFile = path.join(dir, `${name}.log`);
       const metaFile = path.join(dir, `${name}.json`);
 
-      let meta: ProcessMeta | undefined;
+      let meta: ProcessMeta;
       try {
         meta = JSON.parse(fs.readFileSync(metaFile, "utf8"));
       } catch {

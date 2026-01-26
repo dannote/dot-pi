@@ -82,8 +82,14 @@ export default function rulesExtension(pi: ExtensionAPI) {
 
   pi.registerMessageRenderer<RulesMessageDetails>(RULES_MESSAGE_TYPE, (message, _options, theme) => {
     const files = message.details?.files ?? [];
-    const list = files.map((file) => theme.fg("dim", `  ${file}`)).join("\n");
-    return new Text(theme.fg("muted", "Loaded rules:\n") + list, 0, 0);
+    const lines: string[] = [];
+    lines.push(theme.fg("mdHeading", "[Rules]"));
+    lines.push(`  ${theme.fg("accent", "user")}`);
+    for (const file of files) {
+      const shortPath = file.replace(os.homedir(), "~");
+      lines.push(theme.fg("dim", `    ${shortPath}`));
+    }
+    return new Text(lines.join("\n"), 0, 0);
   });
 
   pi.on("context", async (event) => {

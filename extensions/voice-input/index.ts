@@ -1,7 +1,7 @@
 /**
  * Voice Input Extension
  *
- * Press Ctrl+R to record audio, which is transcribed via ElevenLabs
+ * Press Ctrl+Shift+R to record audio, which is transcribed via ElevenLabs
  * in real-time and sent as a user message to the agent.
  *
  * Requires:
@@ -101,8 +101,8 @@ class VoiceInputEditor extends CustomEditor {
 
 	handleInput(data: string): void {
 		if (isRecording) {
-			// Enter or Ctrl+R: submit
-			if (matchesKey(data, Key.enter) || matchesKey(data, Key.ctrl("r"))) {
+			// Enter or Ctrl+Shift+R: submit
+			if (matchesKey(data, Key.enter) || matchesKey(data, Key.ctrlShift("r"))) {
 				onSubmit?.();
 				return;
 			}
@@ -362,8 +362,8 @@ export default function (pi: ExtensionAPI) {
 		pauseRecording();
 	};
 
-	// Ctrl+R: start recording (or submit if already recording)
-	pi.registerShortcut("ctrl+r", {
+	// Ctrl+Shift+R: start recording (or submit if already recording)
+	pi.registerShortcut("ctrl+shift+r", {
 		description: "Record voice input",
 		handler: async (ctx) => {
 			if (!ctx.hasUI) return;

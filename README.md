@@ -20,6 +20,7 @@ Extensions, skills, and rules for [Pi](https://github.com/badlogic/pi-mono) codi
 | `background.ts`          | Run long-running processes (dev servers, watchers) in background without blocking. List, stop, and read logs.                      | Original                                                                                                                                         |
 | `bash-completion/`       | Intelligent bash completions for `!`/`!!` shell commands (git, docker, npm, etc.)                                                  | Original                                                                                                                                         |
 | `codesearch.ts`          | Search public GitHub code via [grep.app](https://grep.app) MCP API                                                                 | Original                                                                                                                                         |
+| `decision-guidance.ts`   | Decision-time guidance: inject situational instructions based on trajectory analysis (doom loops, errors, stuck patterns)          | Based on [Replit blog](https://blog.replit.com/decision-time-guidance)                                                                           |
 | `context7/`              | Search up-to-date library documentation via [Context7](https://context7.com) API                                                   | Original                                                                                                                                         |
 | `confirm-destructive.ts` | Confirm before clearing session or switching with unsaved work                                                                     | Based on [pi-mono example](https://github.com/badlogic/pi-mono/tree/main/packages/coding-agent/examples/extensions/confirm-destructive.ts)       |
 | `critic/`                | Shadow reviewer that evaluates agent output in isolated context and provides feedback                                              | Original                                                                                                                                         |
@@ -62,35 +63,46 @@ Extensions, skills, and rules for [Pi](https://github.com/badlogic/pi-mono) codi
 
 ## Installation
 
-### Extensions
+### As Pi Package (Recommended)
 
-Copy desired extensions to `~/.pi/agent/extensions/`:
+Install as a pi package to get all extensions and skills:
 
 ```bash
-cp extensions/codesearch.ts ~/.pi/agent/extensions/
+pi install git:github.com/dannote/dot-pi
 ```
 
-For extensions with dependencies (`env-json/`, `sandbox/`, `webfetch/`), copy the whole directory and run `bun install`:
+Or install for the current project only:
 
 ```bash
-cp -r extensions/webfetch ~/.pi/agent/extensions/
-cd ~/.pi/agent/extensions/webfetch && bun install
+pi install -l git:github.com/dannote/dot-pi
 ```
 
-### Skills
+Use `pi config` to enable/disable individual extensions and skills.
 
-Copy desired skills to `~/.pi/agent/skills/`:
+### Manual Installation
+
+#### Extensions
+
+Create symlinks to desired extensions in `~/.pi/agent/extensions/`:
 
 ```bash
-cp -r skills/chat-to-skill ~/.pi/agent/skills/
+ln -s /path/to/dot-pi/extensions/codesearch.ts ~/.pi/agent/extensions/
 ```
 
-### Rules
+#### Skills
 
-Copy desired rules to `~/.pi/agent/rules/`:
+Create symlinks to desired skills in `~/.pi/agent/skills/`:
 
 ```bash
-cp rules/typescript.md ~/.pi/agent/rules/
+ln -s /path/to/dot-pi/skills/chat-to-skill ~/.pi/agent/skills/
+```
+
+#### Rules
+
+Rules are not distributed via packages. Create symlinks to desired rules in `~/.pi/agent/rules/`:
+
+```bash
+ln -s /path/to/dot-pi/rules/typescript.md ~/.pi/agent/rules/
 ```
 
 Then add the `rules.ts` extension to load them into the system prompt.
