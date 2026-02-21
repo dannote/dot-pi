@@ -187,6 +187,22 @@ function stopProcess(projectDir: string, name: string): void {
   try { fs.unlinkSync(path.join(dir, `${name}.json`)); } catch { /* ignore */ }
 }
 
+function stripProgressNoise(text: string): string {
+  // eslint-disable-next-line no-control-regex
+  let clean = text.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "");
+
+  clean = clean
+    .split("\n")
+    .map((line) => {
+      if (!line.includes("\r")) return line;
+      const parts = line.split("\r");
+      return parts[parts.length - 1];
+    })
+    .join("\n");
+
+  return clean;
+}
+
 function readLogs(projectDir: string, name: string, lines: number): string {
   const dir = findProcessDir(projectDir, name);
   if (!dir) {
@@ -202,7 +218,7 @@ function readLogs(projectDir: string, name: string, lines: number): string {
     encoding: "utf8",
   });
 
-  const raw = result.stdout || result.stderr || "";
+  const raw = stripProgressNoise(result.stdout || result.stderr || "");
   const truncation = truncateTail(raw, { maxLines: lines });
   
   if (truncation.truncated) {
