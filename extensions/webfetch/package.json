@@ -1,5 +1,5 @@
 {
-  "name": "pi-extension-webfetch",
+  "name": "webfetch",
   "version": "1.0.0",
   "private": true,
   "type": "module",
