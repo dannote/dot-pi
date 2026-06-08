@@ -5,8 +5,8 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 
 const require = createRequire(import.meta.url);
 
-type QuoteSource = "argument" | "selection" | "copy-fallback" | "clipboard";
-type QuoteResult = { text: string; source: QuoteSource };
+export type QuoteSource = "argument" | "selection" | "copy-fallback" | "clipboard";
+export type QuoteResult = { text: string; source: QuoteSource };
 
 type SelectionHookInstance = {
   start(config?: {
@@ -155,7 +155,7 @@ function readSelectionOrClipboard(): QuoteResult | undefined {
   return text ? { text, source: "clipboard" } : undefined;
 }
 
-function quote(text: string): string {
+export function formatQuote(text: string): string {
   return text
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n")
@@ -165,16 +165,19 @@ function quote(text: string): string {
     .join("\n");
 }
 
+export function appendQuote(current: string, quoted: string): string {
+  const separator = current.trim().length === 0 ? "" : current.endsWith("\n") ? "\n" : "\n\n";
+  return `${current}${separator}${quoted}\n\n`;
+}
+
 function insertQuote(ctx: ExtensionContext, result: QuoteResult | undefined): void {
-  const quoted = result ? quote(result.text) : "";
+  const quoted = result ? formatQuote(result.text) : "";
   if (!result || !quoted) {
     ctx.ui.notify("No selected text found", "warning");
     return;
   }
 
-  const current = ctx.ui.getEditorText();
-  const separator = current.trim().length === 0 ? "" : current.endsWith("\n") ? "\n" : "\n\n";
-  ctx.ui.setEditorText(`${current}${separator}${quoted}\n\n`);
+  ctx.ui.setEditorText(appendQuote(ctx.ui.getEditorText(), quoted));
 
   if (result.source === "clipboard") {
     ctx.ui.notify("Quoted clipboard text; no active selection was found", "info");

@@ -15,7 +15,8 @@
     "check": "tsc --noEmit",
     "format": "oxfmt .",
     "lint": "oxlint .",
-    "format:check": "bash -lc 'oxfmt --check package.json $(find extensions skills -path \"*/node_modules\" -prune -o -name \"*.ts\" -print)'"
+    "format:check": "bash -lc 'oxfmt --check package.json $(find extensions skills -path \"*/node_modules\" -prune -o -name \"*.ts\" -print)'",
+    "test": "bun test"
   },
   "dependencies": {
     "@anthropic-ai/sandbox-runtime": "^0.0.32",
