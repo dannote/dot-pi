@@ -2,29 +2,68 @@
   "name": "dot-pi",
   "private": true,
   "description": "Curated Pi extensions, skills, prompt shortcuts, and rules.",
+  "keywords": [
+    "pi-package"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dannote/dot-pi.git"
   },
   "type": "module",
-  "keywords": [
-    "pi-package"
-  ],
   "scripts": {
     "check": "tsc --noEmit",
     "format": "oxfmt .",
-    "lint": "oxlint ."
+    "lint": "oxlint .",
+    "format:check": "bash -lc 'oxfmt --check package.json $(find extensions skills -path \"*/node_modules\" -prune -o -name \"*.ts\" -print)'"
+  },
+  "dependencies": {
+    "@anthropic-ai/sandbox-runtime": "^0.0.32",
+    "cheerio": "^1.2.0",
+    "cli-highlight": "^2.1.11",
+    "exa-js": "^1.1.4",
+    "glob": "^11.0.0",
+    "jsonc-parser": "^3.3.1",
+    "turndown": "^7.2.0",
+    "unpdf": "^1.4.0",
+    "vscode-languageserver-types": "^3.17.5",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-agent-core": "0.78.1",
+    "@earendil-works/pi-ai": "0.78.1",
+    "@earendil-works/pi-coding-agent": "0.78.1",
+    "@earendil-works/pi-tui": "0.78.1",
+    "@types/bun": "latest",
+    "@types/turndown": "^5.0.6",
+    "@types/ws": "^8.5.10",
+    "oxfmt": "^0.24.0",
+    "oxlint": "^1.42.0",
+    "typebox": "^1.1.38",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-agent-core": "*",
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "optionalDependencies": {
+    "selection-hook": "^2.0.1"
   },
   "pi": {
     "extensions": [
       "extensions/ast-grep.ts",
       "extensions/background.ts",
+      "extensions/coach.ts",
+      "extensions/command-priority.ts",
       "extensions/codesearch.ts",
       "extensions/confirm-destructive.ts",
       "extensions/context7",
       "extensions/lsp",
       "extensions/notify.ts",
+      "extensions/quote.ts",
       "extensions/question.ts",
       "extensions/webfetch",
       "extensions/websearch",
@@ -40,36 +79,7 @@
       "prompts"
     ]
   },
-  "dependencies": {
-    "@anthropic-ai/sandbox-runtime": "^0.0.32",
-    "cheerio": "^1.2.0",
-    "cli-highlight": "^2.1.11",
-    "exa-js": "^1.1.4",
-    "glob": "^11.0.0",
-    "jsonc-parser": "^3.3.1",
-    "turndown": "^7.2.0",
-    "unpdf": "^1.4.0",
-    "vscode-languageserver-types": "^3.17.5",
-    "ws": "^8.18.0"
-  },
-  "peerDependencies": {
-    "@earendil-works/pi-agent-core": "*",
-    "@earendil-works/pi-ai": "*",
-    "@earendil-works/pi-coding-agent": "*",
-    "@earendil-works/pi-tui": "*",
-    "typebox": "*"
-  },
-  "devDependencies": {
-    "@earendil-works/pi-agent-core": "0.78.1",
-    "@earendil-works/pi-ai": "0.78.1",
-    "@earendil-works/pi-coding-agent": "0.78.1",
-    "@earendil-works/pi-tui": "0.78.1",
-    "@types/bun": "latest",
-    "@types/turndown": "^5.0.6",
-    "@types/ws": "^8.5.10",
-    "oxfmt": "^0.24.0",
-    "oxlint": "^1.42.0",
-    "typebox": "^1.1.38",
-    "typescript": "^5.9.3"
-  }
+  "trustedDependencies": [
+    "selection-hook"
+  ]
 }
