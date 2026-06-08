@@ -3,4 +3,6 @@ description: State + next steps
 argument-hint: "[count]"
 ---
 
-State briefly. List next steps. If a count is provided, list exactly $1 steps; otherwise list 7 steps. End with best action.
+Requested next-step count: $1
+
+State briefly. List the requested number of next steps; if the requested count is blank, list 7. End with best action.
