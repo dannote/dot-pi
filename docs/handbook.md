@@ -5,6 +5,7 @@ Minimal operating notes for this Pi setup.
 ## Shortcuts
 
 - `/next` — quick state summary and next steps. Use this when momentum matters.
+- `/recap` — recover the original/global plan, compare current state, and call out drift.
 - `/coach` — deeper orientation. It should inspect this handbook, repo/session state, prompt shortcuts, rules, and skills before recommending one next move.
 - `/quote` / `alt+q` — quote assistant text into the editor with `>` prefixes, then write the comment below it. Select text and press `alt+q`; it uses native selection APIs first and avoids stale clipboard text for the shortcut.
 - `/ga` — goal-style autonomous work with evidence.
