@@ -81,6 +81,7 @@ Slash command priority can be configured in `~/.pi/agent/settings.json` or `.pi/
 {
   "slashCommandPriority": [
     "ga",
+    "gaa",
     "lgtm",
     "quote",
     "next",
@@ -117,13 +118,14 @@ My usual coding flow:
 | Prompt           | Use when I would normally type...           | Meaning                                                                                                                       |
 | ---------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `/ga`            | `go ahead`                                  | Minimal approval; continue current path.                                                                                      |
+| `/gaa`           | `go ahead with all`                         | Alias for `/all`; complete all pending review/plan items, not one-by-one.                                                     |
 | `/lgtm`          | `yes`, `do it`, `okay`                      | Proceed; do not ask unless blocked; verify and summarize.                                                                     |
 | `/quote [text]`  | selected assistant excerpt + comment        | Quote args or current selection as `>` lines. Shortcut: `alt+q`; `/quote` without args may use clipboard as a final fallback. |
 | `/next [count]`  | `whats next?`, `what are next 7 big steps?` | Brief state, prioritized next steps, best immediate action.                                                                   |
 | `/recap [focus]` | `wtf is going on?`, `what was the plan?`    | Reconstruct global context: goal, state, decisions, open threads, drift, and best action.                                     |
 | `/ar`            | `autoresearch loop ended... resume`         | Resume experiment loop from saved state; run and log next experiment.                                                         |
 | `/verify`        | `did you test?`, `use browser`, `run ci`    | Run relevant checks, fix failures, rerun focused checks.                                                                      |
-| `/all`           | `fix all`, `do all`, `all pending items`    | Complete all pending review/plan items, not one-by-one.                                                                       |
+| `/all`           | `fix all`, `do all`, `all pending items`    | Same intent as `/gaa`; complete all pending review/plan items, not one-by-one.                                                |
 | `/push`          | `push`, `commit and push`, `time to commit` | Review status, commit in repo style, push.                                                                                    |
 | `/release`       | `publish`, `changelog`, `prepare release`   | Prepare release artifacts/checks; do not publish without confirmation.                                                        |
 | `/retry`         | `retry`, `try again`, `rerun`               | Diagnose previous failure, retry tighter, verify.                                                                             |

@@ -8,7 +8,7 @@ Minimal operating notes for this Pi setup.
 - `/recap` — re-orient both user and agent: original goal, current state, decisions, open threads, drift, best action.
 - `/quote` / `alt+q` — quote assistant text into the editor with `>` prefixes, then write the comment below it. Select text and press `alt+q`; it uses native selection APIs first and avoids stale clipboard text for the shortcut.
 - `/ga` — minimal approval to continue the current path.
-- `/all` — complete all pending review/plan items, not one-by-one.
+- `/gaa` / `/all` — go ahead with all pending review/plan items, not one-by-one.
 - `/lgtm` — review/verification before trusting changes.
 - `/verify` — focused validation.
 - `/retry` — recover after failed checks or an interrupted attempt.
