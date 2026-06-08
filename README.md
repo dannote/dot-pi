@@ -123,7 +123,7 @@ My usual coding flow:
 | `/recap [focus]` | `wtf is going on?`, `what was the plan?`    | Reconstruct global context: goal, state, decisions, open threads, drift, and best action.                                     |
 | `/ar`            | `autoresearch loop ended... resume`         | Resume experiment loop from saved state; run and log next experiment.                                                         |
 | `/verify`        | `did you test?`, `use browser`, `run ci`    | Run relevant checks, fix failures, rerun focused checks.                                                                      |
-| `/all`           | `go ahead with all`, `fix all`, `do all`    | Complete all pending review/plan items, not one-by-one.                                                                       |
+| `/all`           | `fix all`, `do all`, `all pending items`    | Complete all pending review/plan items, not one-by-one.                                                                       |
 | `/push`          | `push`, `commit and push`, `time to commit` | Review status, commit in repo style, push.                                                                                    |
 | `/release`       | `publish`, `changelog`, `prepare release`   | Prepare release artifacts/checks; do not publish without confirmation.                                                        |
 | `/retry`         | `retry`, `try again`, `rerun`               | Diagnose previous failure, retry tighter, verify.                                                                             |
