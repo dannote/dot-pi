@@ -238,7 +238,9 @@ export default function (pi: ExtensionAPI) {
         // PDF handling
         if (isPdf(contentType, url)) {
           try {
-            const { text: pdfText } = await extractPdfText(new Uint8Array(arrayBuffer), { mergePages: true });
+            const { text: pdfText } = await extractPdfText(new Uint8Array(arrayBuffer), {
+              mergePages: true,
+            });
             const { output, truncated, totalChars } = truncateOutput(pdfText);
             return {
               content: [{ type: "text", text: output }],
@@ -384,7 +386,10 @@ export default function (pi: ExtensionAPI) {
         const moreInfo = hiddenCount > 0 ? theme.fg("dim", `\n... ${hiddenCount} more lines`) : "";
         return new Text(
           theme.fg("success", "✓") +
-            theme.fg("muted", `${sizeInfo}${truncationInfo}${redirectInfo}${selectorInfo}\n${preview}`) +
+            theme.fg(
+              "muted",
+              `${sizeInfo}${truncationInfo}${redirectInfo}${selectorInfo}\n${preview}`,
+            ) +
             moreInfo,
           0,
           0,

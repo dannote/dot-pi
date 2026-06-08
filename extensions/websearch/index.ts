@@ -34,7 +34,14 @@ interface WebSearchDetails {
   error?: boolean;
 }
 
-const RESTRICTED_CATEGORIES = new Set(["company", "people", "tweet", "news", "personal site", "financial report"]);
+const RESTRICTED_CATEGORIES = new Set([
+  "company",
+  "people",
+  "tweet",
+  "news",
+  "personal site",
+  "financial report",
+]);
 
 const DESCRIPTION = `Search the web using Exa AI - performs real-time web searches and returns content from relevant websites.
 
@@ -111,7 +118,10 @@ const WebSearchParams = Type.Object({
     }),
   ),
   startPublishedDate: Type.Optional(
-    Type.String({ description: "Only results published after this date (ISO 8601, e.g. '2025-01-01T00:00:00.000Z')" }),
+    Type.String({
+      description:
+        "Only results published after this date (ISO 8601, e.g. '2025-01-01T00:00:00.000Z')",
+    }),
   ),
   endPublishedDate: Type.Optional(
     Type.String({ description: "Only results published before this date (ISO 8601)" }),
@@ -124,7 +134,8 @@ const WebSearchParams = Type.Object({
   ),
   highlights: Type.Optional(
     Type.Boolean({
-      description: "Return relevant text snippets from each page (default: false). Useful for quick context without full text.",
+      description:
+        "Return relevant text snippets from each page (default: false). Useful for quick context without full text.",
     }),
   ),
   summary: Type.Optional(
@@ -136,7 +147,9 @@ const WebSearchParams = Type.Object({
     Type.Number({ description: "Maximum characters for full text per result (default: 10000)" }),
   ),
   userLocation: Type.Optional(
-    Type.String({ description: "Two-letter ISO country code to bias results geographically (e.g. 'US')" }),
+    Type.String({
+      description: "Two-letter ISO country code to bias results geographically (e.g. 'US')",
+    }),
   ),
 });
 
@@ -154,7 +167,8 @@ function formatResultsAsText(results: SearchResult[]): string {
 
       let body = "";
       if (r.summary) body += `\nSummary: ${r.summary}`;
-      if (r.highlights?.length) body += `\nHighlights:\n${r.highlights.map((h) => `- ${h}`).join("\n")}`;
+      if (r.highlights?.length)
+        body += `\nHighlights:\n${r.highlights.map((h) => `- ${h}`).join("\n")}`;
       if (r.text) body += `\n\n${r.text}`;
 
       return `${header}${body}`;
@@ -258,7 +272,9 @@ export default function (pi: ExtensionAPI) {
 
         if (results.length === 0) {
           return {
-            content: [{ type: "text" as const, text: "No search results found. Try a different query." }],
+            content: [
+              { type: "text" as const, text: "No search results found. Try a different query." },
+            ],
             details: { query, results: [] } as WebSearchDetails,
           };
         }
@@ -344,12 +360,14 @@ export default function (pi: ExtensionAPI) {
       const hiddenResults = results.length - maxResults;
       if (!expanded && hiddenResults > 0) {
         container.addChild(
-          new Text(theme.fg("dim", `\n... ${hiddenResults} more, `) + rawKeyHint("ctrl+o", "expand"), 0, 0),
+          new Text(
+            theme.fg("dim", `\n... ${hiddenResults} more, `) + rawKeyHint("ctrl+o", "expand"),
+            0,
+            0,
+          ),
         );
       } else if (!expanded && results.some((r) => r.text.length > PREVIEW_TEXT_LENGTH)) {
-        container.addChild(
-          new Text(theme.fg("dim", "\n") + rawKeyHint("ctrl+o", "expand"), 0, 0),
-        );
+        container.addChild(new Text(theme.fg("dim", "\n") + rawKeyHint("ctrl+o", "expand"), 0, 0));
       }
 
       return container;

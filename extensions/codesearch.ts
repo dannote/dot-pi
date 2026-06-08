@@ -186,8 +186,6 @@ function formatResultsAsText(results: SearchResult[]): string {
     .join("\n\n---\n\n");
 }
 
-
-
 export default function (pi: ExtensionAPI) {
   pi.registerTool({
     name: "codesearch",

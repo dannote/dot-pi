@@ -67,11 +67,7 @@ async function searchLibrary(
   return { libraries: results };
 }
 
-async function getContext(
-  apiKey: string,
-  query: string,
-  libraryId: string,
-): Promise<DocsResult> {
+async function getContext(apiKey: string, query: string, libraryId: string): Promise<DocsResult> {
   // Remove leading slash if present (API expects "org/repo" not "/org/repo")
   const cleanId = libraryId.startsWith("/") ? libraryId.slice(1) : libraryId;
   const params = new URLSearchParams({ query, libraryId: cleanId, type: "txt" });
@@ -118,7 +114,9 @@ export default function (pi: ExtensionAPI) {
     label: "Context7 Resolve",
     description: RESOLVE_DESCRIPTION,
     parameters: Type.Object({
-      libraryName: Type.String({ description: "Library/framework name (e.g., 'react', 'next.js', 'vue')" }),
+      libraryName: Type.String({
+        description: "Library/framework name (e.g., 'react', 'next.js', 'vue')",
+      }),
       query: Type.String({ description: "What you're trying to do (helps rank results)" }),
     }),
 
@@ -142,7 +140,9 @@ export default function (pi: ExtensionAPI) {
 
       if (result.libraries.length === 0) {
         return {
-          content: [{ type: "text" as const, text: `No libraries found for "${params.libraryName}"` }],
+          content: [
+            { type: "text" as const, text: `No libraries found for "${params.libraryName}"` },
+          ],
           details: { libraries: [] },
         };
       }
@@ -189,13 +189,19 @@ export default function (pi: ExtensionAPI) {
 
       const container = new Container();
       container.addChild(
-        new Text(theme.fg("success", "✓ ") + theme.fg("muted", `${libraries.length} libraries`), 0, 0),
+        new Text(
+          theme.fg("success", "✓ ") + theme.fg("muted", `${libraries.length} libraries`),
+          0,
+          0,
+        ),
       );
 
       const maxItems = expanded ? libraries.length : 1;
       for (let i = 0; i < maxItems; i++) {
         const lib = libraries[i];
-        container.addChild(new Text("\n" + theme.fg("accent", lib.id) + theme.fg("dim", ` — ${lib.title}`), 0, 0));
+        container.addChild(
+          new Text("\n" + theme.fg("accent", lib.id) + theme.fg("dim", ` — ${lib.title}`), 0, 0),
+        );
         if (expanded && lib.description) {
           container.addChild(new Text(theme.fg("muted", `  ${lib.description}`), 0, 0));
         }
@@ -203,7 +209,12 @@ export default function (pi: ExtensionAPI) {
 
       if (!expanded && libraries.length > 1) {
         container.addChild(
-          new Text(theme.fg("dim", `\n... +${libraries.length - 1} more, `) + rawKeyHint("ctrl+o", "to expand"), 0, 0),
+          new Text(
+            theme.fg("dim", `\n... +${libraries.length - 1} more, `) +
+              rawKeyHint("ctrl+o", "to expand"),
+            0,
+            0,
+          ),
         );
       }
 
@@ -240,7 +251,9 @@ export default function (pi: ExtensionAPI) {
 
       if (!result.docs.trim()) {
         return {
-          content: [{ type: "text" as const, text: `No documentation found for "${params.libraryId}"` }],
+          content: [
+            { type: "text" as const, text: `No documentation found for "${params.libraryId}"` },
+          ],
           details: { libraryId: params.libraryId, empty: true } as DocsDetails,
         };
       }

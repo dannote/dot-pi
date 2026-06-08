@@ -5,7 +5,12 @@
  * Patterns match syntax structure, not text.
  */
 
-import { type ExtensionAPI, DEFAULT_MAX_BYTES, DEFAULT_MAX_LINES, truncateTail } from "@earendil-works/pi-coding-agent";
+import {
+  type ExtensionAPI,
+  DEFAULT_MAX_BYTES,
+  DEFAULT_MAX_LINES,
+  truncateTail,
+} from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
@@ -39,8 +44,12 @@ export default function (pi: ExtensionAPI) {
     description: SEARCH_DESCRIPTION,
     parameters: Type.Object({
       pattern: Type.String({ description: "AST pattern to match" }),
-      lang: Type.Optional(Type.String({ description: "Language (typescript, python, go, rust, etc.)" })),
-      path: Type.Optional(Type.String({ description: "Path to search (default: current directory)" })),
+      lang: Type.Optional(
+        Type.String({ description: "Language (typescript, python, go, rust, etc.)" }),
+      ),
+      path: Type.Optional(
+        Type.String({ description: "Path to search (default: current directory)" }),
+      ),
     }),
 
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
@@ -61,7 +70,10 @@ export default function (pi: ExtensionAPI) {
         return { content: [{ type: "text", text: "No matches found" }], details: {} };
       }
 
-      const truncation = truncateTail(output, { maxLines: DEFAULT_MAX_LINES, maxBytes: DEFAULT_MAX_BYTES });
+      const truncation = truncateTail(output, {
+        maxLines: DEFAULT_MAX_LINES,
+        maxBytes: DEFAULT_MAX_BYTES,
+      });
       let text = truncation.content;
       if (truncation.truncated) {
         text += `\n\n[Truncated: showing last ${truncation.outputLines} of ${truncation.totalLines} lines]`;
@@ -86,10 +98,18 @@ export default function (pi: ExtensionAPI) {
     description: REWRITE_DESCRIPTION,
     parameters: Type.Object({
       pattern: Type.String({ description: "AST pattern to match" }),
-      replacement: Type.String({ description: "Replacement pattern (use captured $NAME variables)" }),
-      lang: Type.Optional(Type.String({ description: "Language (typescript, python, go, rust, etc.)" })),
-      path: Type.Optional(Type.String({ description: "Path to rewrite (default: current directory)" })),
-      dryRun: Type.Optional(Type.Boolean({ description: "Preview changes without applying (default: false)" })),
+      replacement: Type.String({
+        description: "Replacement pattern (use captured $NAME variables)",
+      }),
+      lang: Type.Optional(
+        Type.String({ description: "Language (typescript, python, go, rust, etc.)" }),
+      ),
+      path: Type.Optional(
+        Type.String({ description: "Path to rewrite (default: current directory)" }),
+      ),
+      dryRun: Type.Optional(
+        Type.Boolean({ description: "Preview changes without applying (default: false)" }),
+      ),
     }),
 
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
@@ -115,12 +135,20 @@ export default function (pi: ExtensionAPI) {
       const output = result.stdout || result.stderr;
       if (!output.trim()) {
         return {
-          content: [{ type: "text", text: dryRun ? "No matches found" : "No matches found (nothing to rewrite)" }],
+          content: [
+            {
+              type: "text",
+              text: dryRun ? "No matches found" : "No matches found (nothing to rewrite)",
+            },
+          ],
           details: {},
         };
       }
 
-      const truncation = truncateTail(output, { maxLines: DEFAULT_MAX_LINES, maxBytes: DEFAULT_MAX_BYTES });
+      const truncation = truncateTail(output, {
+        maxLines: DEFAULT_MAX_LINES,
+        maxBytes: DEFAULT_MAX_BYTES,
+      });
       let text = truncation.content;
 
       if (dryRun) {

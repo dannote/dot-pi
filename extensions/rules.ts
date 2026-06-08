@@ -93,17 +93,20 @@ export default function rulesExtension(pi: ExtensionAPI) {
   let ruleFiles: RuleFile[] = [];
   const rulesDir = path.join(os.homedir(), ".pi", "agent", "rules");
 
-  pi.registerMessageRenderer<RulesMessageDetails>(RULES_MESSAGE_TYPE, (message, _options, theme) => {
-    const files = message.details?.files ?? [];
-    const lines: string[] = [];
-    lines.push(theme.fg("mdHeading", "[Rules]"));
-    lines.push(`  ${theme.fg("accent", "user")}`);
-    for (const file of files) {
-      const shortPath = file.replace(os.homedir(), "~");
-      lines.push(theme.fg("dim", `    ${shortPath}`));
-    }
-    return new Text(lines.join("\n"), 0, 0);
-  });
+  pi.registerMessageRenderer<RulesMessageDetails>(
+    RULES_MESSAGE_TYPE,
+    (message, _options, theme) => {
+      const files = message.details?.files ?? [];
+      const lines: string[] = [];
+      lines.push(theme.fg("mdHeading", "[Rules]"));
+      lines.push(`  ${theme.fg("accent", "user")}`);
+      for (const file of files) {
+        const shortPath = file.replace(os.homedir(), "~");
+        lines.push(theme.fg("dim", `    ${shortPath}`));
+      }
+      return new Text(lines.join("\n"), 0, 0);
+    },
+  );
 
   pi.on("context", async (event) => {
     return {

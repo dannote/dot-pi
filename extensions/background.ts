@@ -2,7 +2,7 @@
  * Background Process Manager
  *
  * Start, stop, and monitor long-running processes (dev servers, watchers) without blocking.
- * 
+ *
  * Storage: /tmp/pi-bg/<project-hash>/<name>.{pid,log,json}
  * The .json file stores metadata (cwd, command) for display purposes.
  */
@@ -125,7 +125,12 @@ function listProcesses(projectDir: string): ProcessInfo[] {
   return results;
 }
 
-function startProcess(projectDir: string, name: string, command: string, cwd?: string): ProcessInfo {
+function startProcess(
+  projectDir: string,
+  name: string,
+  command: string,
+  cwd?: string,
+): ProcessInfo {
   const dir = ensureProjectDir(projectDir);
   const pidFile = path.join(dir, `${name}.pid`);
   const logFile = path.join(dir, `${name}.log`);
@@ -154,7 +159,7 @@ function startProcess(projectDir: string, name: string, command: string, cwd?: s
 
   child.unref();
   fs.writeFileSync(pidFile, pid.toString());
-  
+
   const meta: ProcessMeta = { projectDir, command, cwd: relativeCwd };
   fs.writeFileSync(metaFile, JSON.stringify(meta));
 
@@ -184,7 +189,11 @@ function stopProcess(projectDir: string, name: string): void {
   }
 
   fs.unlinkSync(pidFile);
-  try { fs.unlinkSync(path.join(dir, `${name}.json`)); } catch { /* ignore */ }
+  try {
+    fs.unlinkSync(path.join(dir, `${name}.json`));
+  } catch {
+    /* ignore */
+  }
 }
 
 function stripProgressNoise(text: string): string {
@@ -220,11 +229,11 @@ function readLogs(projectDir: string, name: string, lines: number): string {
 
   const raw = stripProgressNoise(result.stdout || result.stderr || "");
   const truncation = truncateTail(raw, { maxLines: lines });
-  
+
   if (truncation.truncated) {
     return `[truncated: showing last ${truncation.outputLines} lines / ${truncation.outputBytes} bytes]\n${truncation.content}`;
   }
-  
+
   return truncation.content;
 }
 
@@ -249,7 +258,11 @@ function getChildPids(pid: number): number[] {
       timeout: 500,
     });
     if (!result.stdout) return [];
-    return result.stdout.trim().split("\n").map((s) => parseInt(s, 10)).filter((n) => n > 0);
+    return result.stdout
+      .trim()
+      .split("\n")
+      .map((s) => parseInt(s, 10))
+      .filter((n) => n > 0);
   } catch {
     return [];
   }
@@ -258,13 +271,17 @@ function getChildPids(pid: number): number[] {
 function getListeningPorts(pid: number): number[] {
   const pids = [pid, ...getChildPids(pid)];
   const ports = new Set<number>();
-  
+
   for (const p of pids) {
     try {
-      const result = spawnSync("lsof", ["-iTCP", "-sTCP:LISTEN", "-P", "-n", "-a", "-p", p.toString()], {
-        encoding: "utf8",
-        timeout: 500,
-      });
+      const result = spawnSync(
+        "lsof",
+        ["-iTCP", "-sTCP:LISTEN", "-P", "-n", "-a", "-p", p.toString()],
+        {
+          encoding: "utf8",
+          timeout: 500,
+        },
+      );
       if (!result.stdout) continue;
       for (const line of result.stdout.split("\n").slice(1)) {
         const match = line.match(/:(\d+)\s+\(LISTEN\)/);
@@ -291,14 +308,16 @@ function updateStatus(ctx: ExtensionContext) {
     ctx.ui.setWidget("background-logs", undefined);
   } else {
     const theme = ctx.ui.theme;
-    const items = running.map((p) => {
-      const display = getDisplayName(p);
-      const ports = getListeningPorts(p.pid);
-      if (ports.length > 0) {
-        return display + ":" + theme.fg("accent", ports.join(","));
-      }
-      return display;
-    }).join(" ");
+    const items = running
+      .map((p) => {
+        const display = getDisplayName(p);
+        const ports = getListeningPorts(p.pid);
+        if (ports.length > 0) {
+          return display + ":" + theme.fg("accent", ports.join(","));
+        }
+        return display;
+      })
+      .join(" ");
     ctx.ui.setStatus("background", theme.fg("success", "●") + " " + items);
 
     ctx.ui.setWidget(
@@ -381,7 +400,7 @@ export default function (pi: ExtensionAPI) {
     async handler(args, ctx) {
       const name = args.trim();
       const processes = listProcesses(ctx.cwd);
-      
+
       if (!name) {
         const running = processes.filter((p) => p.running);
         if (running.length === 0) {
@@ -478,11 +497,7 @@ export default function (pi: ExtensionAPI) {
       const details = result.details as ProcessInfo;
       if (details.error) {
         const text = result.content[0];
-        return new Text(
-          theme.fg("error", text?.type === "text" ? text.text : "Error"),
-          0,
-          0,
-        );
+        return new Text(theme.fg("error", text?.type === "text" ? text.text : "Error"), 0, 0);
       }
       return new Text(
         theme.fg("success", "✓ ") +
@@ -538,11 +553,7 @@ export default function (pi: ExtensionAPI) {
       const details = result.details as StopDetails;
       if (details.error) {
         const text = result.content[0];
-        return new Text(
-          theme.fg("error", text?.type === "text" ? text.text : "Error"),
-          0,
-          0,
-        );
+        return new Text(theme.fg("error", text?.type === "text" ? text.text : "Error"), 0, 0);
       }
       return new Text(theme.fg("success", "✓ Stopped"), 0, 0);
     },
@@ -649,11 +660,7 @@ export default function (pi: ExtensionAPI) {
       const details = result.details as LogsDetails;
       if (details.error) {
         const text = result.content[0];
-        return new Text(
-          theme.fg("error", text?.type === "text" ? text.text : "Error"),
-          0,
-          0,
-        );
+        return new Text(theme.fg("error", text?.type === "text" ? text.text : "Error"), 0, 0);
       }
       const preview = details.logs.split("\n").slice(-3).join("\n");
       return new Text(theme.fg("dim", preview || "(empty)"), 0, 0);
