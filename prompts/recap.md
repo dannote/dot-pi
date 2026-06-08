@@ -14,4 +14,4 @@ Cover:
 5. Drift or plan changes
 6. Best next action
 
-Keep it concise. If an argument is provided, focus on it.
+Keep it concise. Focus on: $ARGUMENTS
