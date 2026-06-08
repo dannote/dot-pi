@@ -1,6 +1,17 @@
 ---
-description: Original plan vs current drift
+description: Global context recap
 argument-hint: "[focus]"
 ---
 
-Recover the original/global plan from earlier in the conversation. Compare it to the current state. Note where we drifted, whether the drift is useful or risky, and what to do next. Keep it brief. If an argument is provided, focus on it. End with best action.
+Reconstruct the global context from this conversation so you and I are both re-oriented. Do not over-focus on the last turn.
+
+Cover:
+
+1. Original goal / plan
+2. Current state
+3. Important decisions
+4. Open threads
+5. Drift or plan changes
+6. Best next action
+
+Keep it concise. If an argument is provided, focus on it.
