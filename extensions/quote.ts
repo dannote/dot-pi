@@ -5,6 +5,9 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 
 const require = createRequire(import.meta.url);
 
+type QuoteSource = "argument" | "selection" | "copy-fallback" | "clipboard";
+type QuoteResult = { text: string; source: QuoteSource };
+
 type SelectionHookInstance = {
   start(config?: {
     enableClipboard?: boolean;
@@ -51,12 +54,8 @@ function writeClipboard(text: string): boolean {
   ];
 
   for (const [command, args] of commands) {
-    try {
-      spawnSync(command, args, { input: text, stdio: ["pipe", "ignore", "ignore"] });
-      return true;
-    } catch {
-      // Try the next clipboard command.
-    }
+    const result = spawnSync(command, args, { input: text, stdio: ["pipe", "ignore", "ignore"] });
+    if (!result.error && result.status === 0) return true;
   }
 
   return false;
@@ -66,26 +65,26 @@ function sleep(milliseconds: number): void {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
 }
 
-function readSelectionHook(): string {
+function readSelectionHook(): QuoteResult | undefined {
   try {
     const mod = require("selection-hook") as
       | SelectionHookConstructor
       | { default?: SelectionHookConstructor };
     const SelectionHook = typeof mod === "function" ? mod : mod.default;
-    if (!SelectionHook) return "";
+    if (!SelectionHook) return;
 
     const hook = new SelectionHook();
     try {
-      if (!hook.start({ enableClipboard: false, selectionPassiveMode: true, debug: false }))
-        return "";
+      if (!hook.start({ enableClipboard: false, selectionPassiveMode: true, debug: false })) return;
       sleep(30);
-      return hook.getCurrentSelection()?.text?.trim() ?? "";
+      const text = hook.getCurrentSelection()?.text?.trim();
+      return text ? { text, source: "selection" } : undefined;
     } finally {
       hook.stop();
       hook.cleanup?.();
     }
   } catch {
-    return "";
+    return;
   }
 }
 
@@ -133,19 +132,27 @@ function copySelectionIntoClipboard(): boolean {
   return false;
 }
 
-function readClipboardPreservingCopyFallback(): string {
+function readClipboardPreservingCopyFallback(): QuoteResult | undefined {
   const before = readClipboard();
-  if (!copySelectionIntoClipboard()) return "";
+  if (!copySelectionIntoClipboard()) return;
 
   sleep(100);
-  const selected = readClipboard();
+  const selected = readClipboard().trim();
   if (selected !== before) writeClipboard(before);
 
-  return selected;
+  return selected ? { text: selected, source: "copy-fallback" } : undefined;
 }
 
-function readSelectedText(): string {
-  return readSelectionHook() || readClipboardPreservingCopyFallback() || readClipboard();
+function readSelection(): QuoteResult | undefined {
+  return readSelectionHook() ?? readClipboardPreservingCopyFallback();
+}
+
+function readSelectionOrClipboard(): QuoteResult | undefined {
+  const result = readSelection();
+  if (result) return result;
+
+  const text = readClipboard().trim();
+  return text ? { text, source: "clipboard" } : undefined;
 }
 
 function quote(text: string): string {
@@ -158,23 +165,28 @@ function quote(text: string): string {
     .join("\n");
 }
 
-function insertQuote(ctx: ExtensionContext, text: string): void {
-  const quoted = quote(text);
-  if (!quoted) {
-    ctx.ui.notify("No selection or clipboard text found", "warning");
+function insertQuote(ctx: ExtensionContext, result: QuoteResult | undefined): void {
+  const quoted = result ? quote(result.text) : "";
+  if (!result || !quoted) {
+    ctx.ui.notify("No selected text found", "warning");
     return;
   }
 
   const current = ctx.ui.getEditorText();
   const separator = current.trim().length === 0 ? "" : current.endsWith("\n") ? "\n" : "\n\n";
   ctx.ui.setEditorText(`${current}${separator}${quoted}\n\n`);
+
+  if (result.source === "clipboard") {
+    ctx.ui.notify("Quoted clipboard text; no active selection was found", "info");
+  }
 }
 
 export default function quoteExtension(pi: ExtensionAPI) {
   pi.registerCommand("quote", {
     description: "Insert selected/copied text as email-style quote",
     async handler(args, ctx) {
-      insertQuote(ctx, args.trim() || readSelectedText());
+      const text = args.trim();
+      insertQuote(ctx, text ? { text, source: "argument" } : readSelectionOrClipboard());
     },
   });
 
@@ -182,7 +194,7 @@ export default function quoteExtension(pi: ExtensionAPI) {
     description: "Quote current selection into editor",
     handler(ctx) {
       if (!ctx.hasUI) return;
-      insertQuote(ctx, readSelectedText());
+      insertQuote(ctx, readSelection());
     },
   });
 }

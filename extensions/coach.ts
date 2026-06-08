@@ -11,7 +11,7 @@ const skillsPath = join(packageRoot, "skills");
 function buildCoachPrompt(args: string): string {
   const focus = args.trim();
 
-  return `Act as my Pi coach. Analyze the current session state and suggest the highest-leverage next move.
+  return `Act as my Pi coach. Orient me and recommend one next move.
 
 Use live evidence where useful:
 - current conversation/session context
@@ -21,14 +21,12 @@ Use live evidence where useful:
 - rules: ${rulesPath}
 - skills: ${skillsPath}
 ${focus ? `\nFocus especially on: ${focus}\n` : ""}
-Keep it minimal. Do not start implementing unless I explicitly ask.
+You may inspect files and run read-only commands. Do not edit files, commit, push, or start implementation.
 
-Return:
-1. Situation: one short paragraph
-2. Best next move: one concrete action
-3. Why this action
-4. Exact prompt or command I should run next
-5. Risks/checks, if any`;
+Return only:
+1. State: one short paragraph
+2. Next steps: up to 5 bullets
+3. Best action: one concrete prompt/command to run next`;
 }
 
 export default function coach(pi: ExtensionAPI) {

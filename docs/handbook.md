@@ -6,7 +6,7 @@ Minimal operating notes for this Pi setup.
 
 - `/next` — quick state summary and next steps. Use this when momentum matters.
 - `/coach` — deeper orientation. It should inspect this handbook, repo/session state, prompt shortcuts, rules, and skills before recommending one next move.
-- `/quote` / `alt+q` — quote assistant text into the editor with `>` prefixes, then write the comment below it. Select text and press `alt+q`; it uses selection APIs first and clipboard fallback only when needed.
+- `/quote` / `alt+q` — quote assistant text into the editor with `>` prefixes, then write the comment below it. Select text and press `alt+q`; it uses native selection APIs first and avoids stale clipboard text for the shortcut.
 - `/ga` — goal-style autonomous work with evidence.
 - `/lgtm` — review/verification before trusting changes.
 - `/verify` — focused validation.
@@ -31,4 +31,4 @@ When `/coach` runs, it should:
 4. Recommend exactly one best next move.
 5. Provide the exact prompt or command to run next.
 
-It should not start implementing by default.
+It may inspect, but should not edit files, commit, push, or start implementing by default.
