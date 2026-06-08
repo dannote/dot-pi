@@ -6,7 +6,6 @@ Minimal operating notes for this Pi setup.
 
 - `/next` — quick state summary and next steps. Use this when momentum matters.
 - `/recap` — re-orient both user and agent: original goal, current state, decisions, open threads, drift, best action.
-- `/coach` — deeper orientation. It should inspect this handbook, repo/session state, prompt shortcuts, rules, and skills before recommending one next move.
 - `/quote` / `alt+q` — quote assistant text into the editor with `>` prefixes, then write the comment below it. Select text and press `alt+q`; it uses native selection APIs first and avoids stale clipboard text for the shortcut.
 - `/ga` — goal-style autonomous work with evidence.
 - `/lgtm` — review/verification before trusting changes.
@@ -22,14 +21,6 @@ Minimal operating notes for this Pi setup.
 - Extract shared extension helpers only after a pattern repeats.
 - Favor small, composable extensions over a framework.
 
-## Coach behavior
+## Optional newcomer coach
 
-When `/coach` runs, it should:
-
-1. Understand current task/session state.
-2. Inspect git status and relevant files if helpful.
-3. Read this handbook and nearby prompts/rules when relevant.
-4. Recommend exactly one best next move.
-5. Provide the exact prompt or command to run next.
-
-It may inspect, but should not edit files, commit, push, or start implementing by default.
+The optional `/coach` extension is for humans copying this setup. It should explain the setup, shortcuts, habits, and first workflows. It may inspect handbook/prompts/rules/skills, but should not edit files, commit, push, or start implementing by default.

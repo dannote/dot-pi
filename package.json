@@ -57,7 +57,6 @@
     "extensions": [
       "extensions/ast-grep.ts",
       "extensions/background.ts",
-      "extensions/coach.ts",
       "extensions/command-priority.ts",
       "extensions/codesearch.ts",
       "extensions/confirm-destructive.ts",

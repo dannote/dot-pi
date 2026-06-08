@@ -145,18 +145,25 @@ Enable them by replacing the package entry in `~/.pi/agent/settings.json` with a
 
 ### Optional extensions
 
-| Extension              | Why optional                                                     |
-| ---------------------- | ---------------------------------------------------------------- |
-| `bash-completion/`     | Advanced terminal completion; can be noisy while editing prompts |
-| `critic/`              | Experimental shadow-review loop                                  |
-| `decision-guidance.ts` | Experimental trajectory guidance                                 |
-| `env-json/`            | Only useful if you keep secrets in `~/.pi/agent/env.jsonc`       |
-| `permission-gate.ts`   | Opinionated command blocking                                     |
-| `plan-mode/`           | Experimental read-only planning mode                             |
-| `provider/`            | Experimental dynamic provider registration                       |
-| `rules.ts`             | Personal rule loader for symlinked files in `~/.pi/agent/rules/` |
-| `sandbox/`             | Experimental OS-level sandboxing                                 |
-| `voice-input/`         | Requires ElevenLabs key and audio setup                          |
+`coach.ts` is the optional extension I recommend to newcomers: it explains the setup, habits, and first workflows. Try it from a local checkout with:
+
+```bash
+pi -e /path/to/dot-pi/extensions/coach.ts
+```
+
+| Extension              | Why optional                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------- |
+| `bash-completion/`     | Advanced terminal completion; can be noisy while editing prompts                  |
+| `coach.ts`             | Recommended for newcomers copying this setup; explains habits and first workflows |
+| `critic/`              | Experimental shadow-review loop                                                   |
+| `decision-guidance.ts` | Experimental trajectory guidance                                                  |
+| `env-json/`            | Only useful if you keep secrets in `~/.pi/agent/env.jsonc`                        |
+| `permission-gate.ts`   | Opinionated command blocking                                                      |
+| `plan-mode/`           | Experimental read-only planning mode                                              |
+| `provider/`            | Experimental dynamic provider registration                                        |
+| `rules.ts`             | Personal rule loader for symlinked files in `~/.pi/agent/rules/`                  |
+| `sandbox/`             | Experimental OS-level sandboxing                                                  |
+| `voice-input/`         | Requires ElevenLabs key and audio setup                                           |
 
 ### Optional skills
 

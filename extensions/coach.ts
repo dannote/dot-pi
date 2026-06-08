@@ -11,27 +11,26 @@ const skillsPath = join(packageRoot, "skills");
 function buildCoachPrompt(args: string): string {
   const focus = args.trim();
 
-  return `Act as my Pi coach. Orient me and recommend one next move.
+  return `Act as a newcomer coach for this Pi setup. Help a human understand the setup, patterns, and habits.
 
 Use live evidence where useful:
-- current conversation/session context
-- current working directory and git state
 - handbook: ${handbookPath}
 - prompt shortcuts: ${promptsPath}
 - rules: ${rulesPath}
 - skills: ${skillsPath}
 ${focus ? `\nFocus especially on: ${focus}\n` : ""}
-You may inspect files and run read-only commands. Do not edit files, commit, push, or start implementation.
+Keep it practical and concise. Do not edit files, commit, push, or start implementation.
 
 Return only:
-1. State: one short paragraph
-2. Next steps: up to 5 bullets
-3. Best action: one concrete prompt/command to run next`;
+1. What this setup is for
+2. The 5 most important habits/shortcuts to learn first
+3. Recommended first workflow for a newcomer
+4. Best next command or prompt to try`;
 }
 
 export default function coach(pi: ExtensionAPI) {
   pi.registerCommand("coach", {
-    description: "Analyze current state against my Pi handbook and suggest the next move",
+    description: "Explain this Pi setup and recommend newcomer workflow habits",
     async handler(args, ctx) {
       ctx.ui.notify("Running coach…", "info");
       pi.sendUserMessage(buildCoachPrompt(args));
