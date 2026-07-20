@@ -276,6 +276,7 @@ Run `/oracle` without args for the native intent picker and cost/context confirm
 | `agent-browser`           | Browser automation via agent-browser CLI. This wrapper loads current docs from `agent-browser skills get core` instead of vendoring them. | `npm install -g agent-browser && agent-browser install` |
 | `github-issues`           | Work with GitHub Issues via `gh`                                                                                                          | `gh auth login`                                         |
 | `keyboard-layout-decoder` | Decode Russian/English wrong-keyboard-layout text                                                                                         | None                                                    |
+| `package-release`         | Prepare, publish, repair, and verify package releases from canonical user-facing changelogs                                               | Registry and GitHub credentials as required             |
 | `skill-discovery`         | Discover agent skills on GitHub                                                                                                           | None                                                    |
 
 ## Optional resources

@@ -90,6 +90,7 @@
       "skills/agent-browser",
       "skills/github-issues",
       "skills/keyboard-layout-decoder",
+      "skills/package-release",
       "skills/skill-discovery"
     ],
     "prompts": [
