@@ -14,9 +14,9 @@ function readPriority(settings: Record<string, unknown>): string[] {
   return []
 }
 
-function loadPriority(cwd: string): string[] {
+function loadPriority(cwd: string, projectTrusted: boolean): string[] {
   const seen = new Set<string>()
-  const priority = readLayeredSettings(cwd).flatMap(readPriority)
+  const priority = readLayeredSettings(cwd, { projectTrusted }).flatMap(readPriority)
 
   return priority
     .map((name) => name.replace(/^\//, ''))
@@ -47,7 +47,7 @@ function score(
 
 export default function commandPriority(pi: ExtensionAPI) {
   pi.on('session_start', (_event, ctx) => {
-    const priority = loadPriority(ctx.cwd)
+    const priority = loadPriority(ctx.cwd, ctx.isProjectTrusted())
     if (priority.length === 0) return
 
     const priorityMap = new Map(priority.map((name, index) => [name, index]))

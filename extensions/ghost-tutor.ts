@@ -1,4 +1,4 @@
-import { streamSimple, type AssistantMessageEvent, type Message } from '@earendil-works/pi-ai'
+import type { Message } from '@earendil-works/pi-ai'
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent'
 import { Box, Text } from '@earendil-works/pi-tui'
 import { registerDisplayOnlyMessage } from './shared/display-message'
@@ -103,50 +103,31 @@ Dan-style cues:
 - reject pseudo-work, excessive text, wrong audience, and agent silently choosing product/API shape`
 }
 
-function eventTextDelta(event: AssistantMessageEvent): string {
-  return event.type === 'text_delta' ? event.delta : ''
-}
-
 async function streamGhostTutor(
   ctx: ExtensionContext,
   onText: (text: string) => void
 ): Promise<string | undefined> {
-  if (!ctx.model) return undefined
-
-  const auth = await ctx.modelRegistry.getApiKeyAndHeaders(ctx.model)
-  if (!auth.ok || !auth.apiKey) return undefined
+  if (!ctx.model || !ctx.modelRegistry.hasConfiguredAuth(ctx.model)) return undefined
 
   const messages = buildGhostConversation(ctx.sessionManager.getBranch() as BranchEntry[])
   if (messages.length === 0) return undefined
 
-  let text = ''
-  const events = streamSimple(
+  const response = await ctx.modelRegistry.complete(
     ctx.model,
     {
       systemPrompt: buildGhostTutorSystemPrompt(),
       messages
     },
-    {
-      apiKey: auth.apiKey,
-      headers: auth.headers,
-      signal: ctx.signal
-    }
+    { signal: ctx.signal }
   )
 
-  for await (const event of events) {
-    const delta = eventTextDelta(event)
-    if (!delta) continue
-    text += delta
-    onText(text)
-  }
-
-  const final = (await events.result()).content
+  const result = response.content
     .filter((part): part is { type: 'text'; text: string } => part.type === 'text')
     .map((part) => part.text)
     .join('')
     .trim()
 
-  const result = (final || text).trim()
+  onText(result)
   if (!result || result === 'NO_NUDGE') return undefined
   return result
 }
@@ -188,7 +169,7 @@ export default function ghostTutor(pi: ExtensionAPI) {
     setGhostWidget(ctx, undefined)
   })
 
-  pi.on('agent_end', async (_event, ctx) => {
+  pi.on('agent_settled', async (_event, ctx) => {
     if (pi.getFlag('ghost-tutor') !== true) return
     if (ctx.hasPendingMessages()) return
 

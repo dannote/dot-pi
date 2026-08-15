@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
+import { CONFIG_DIR_NAME } from '@earendil-works/pi-coding-agent'
+
 import { parseJsoncObject } from './json'
 
 export function agentSettingsPath(): string {
@@ -11,7 +13,7 @@ export function agentSettingsPath(): string {
 }
 
 export function projectSettingsPath(cwd: string): string {
-  return join(cwd, '.pi', 'settings.json')
+  return join(cwd, CONFIG_DIR_NAME, 'settings.json')
 }
 
 export function readSettingsFile(path: string): Record<string, unknown> {
@@ -19,8 +21,13 @@ export function readSettingsFile(path: string): Record<string, unknown> {
   return parseJsoncObject(readFileSync(path, 'utf8')) ?? {}
 }
 
-export function readLayeredSettings(cwd: string): Record<string, unknown>[] {
-  return [readSettingsFile(agentSettingsPath()), readSettingsFile(projectSettingsPath(cwd))]
+export function readLayeredSettings(
+  cwd: string,
+  options: { projectTrusted: boolean }
+): Record<string, unknown>[] {
+  const settings = [readSettingsFile(agentSettingsPath())]
+  if (options.projectTrusted) settings.push(readSettingsFile(projectSettingsPath(cwd)))
+  return settings
 }
 
 export function deepMerge<T extends Record<string, unknown>>(base: T, override: unknown): T {

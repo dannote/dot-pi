@@ -17,32 +17,27 @@ type StopInfo = {
 export default function (pi: ExtensionAPI) {
   let toolsCalled = new Set<string>()
   let currentPrompt = ''
-  let suppressAgentEndUntilCompactFinishes = false
-
-  pi.on('session_before_compact', () => {
-    suppressAgentEndUntilCompactFinishes = true
-  })
-
-  pi.on('session_compact', () => {
-    suppressAgentEndUntilCompactFinishes = false
-  })
+  let lastStop: StopInfo = {}
 
   pi.on('before_agent_start', (event) => {
     currentPrompt = summarize(event.prompt)
-    suppressAgentEndUntilCompactFinishes = false
   })
 
   pi.on('agent_start', () => {
     toolsCalled = new Set()
+    lastStop = {}
   })
 
   pi.on('tool_call', (event) => {
     toolsCalled.add(event.toolName)
   })
 
-  pi.on('agent_end', async (event, ctx) => {
-    const lastMessage = event.messages[event.messages.length - 1]
-    const { stopReason, errorMessage } = getStopInfo(lastMessage)
+  pi.on('agent_end', (event) => {
+    lastStop = getStopInfo(event.messages[event.messages.length - 1])
+  })
+
+  pi.on('agent_settled', async (_event, ctx) => {
+    const { stopReason, errorMessage } = lastStop
     const title = formatPiNotificationTitle(ctx.cwd)
 
     if (stopReason === 'error') {
@@ -51,7 +46,6 @@ export default function (pi: ExtensionAPI) {
     }
 
     if (stopReason === 'aborted') return
-    if (suppressAgentEndUntilCompactFinishes) return
     if (!shouldNotifyAgentEnd(toolsCalled, currentPrompt)) return
 
     notifyDesktop(title, getNotificationBody(toolsCalled, currentPrompt))

@@ -15,8 +15,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import * as os from 'node:os'
 import type { AgentMessage } from '@earendil-works/pi-agent-core'
-import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
-import { parseFrontmatter } from '@earendil-works/pi-coding-agent'
+import { getAgentDir, parseFrontmatter, type ExtensionAPI } from '@earendil-works/pi-coding-agent'
 import { Text } from '@earendil-works/pi-tui'
 import { minimatch } from 'minimatch'
 
@@ -91,7 +90,7 @@ function isRulesListMessage(message: AgentMessage): boolean {
 
 export default function rulesExtension(pi: ExtensionAPI) {
   let ruleFiles: RuleFile[] = []
-  const rulesDir = path.join(os.homedir(), '.pi', 'agent', 'rules')
+  const rulesDir = path.join(getAgentDir(), 'rules')
 
   pi.registerMessageRenderer<RulesMessageDetails>(
     RULES_MESSAGE_TYPE,
@@ -128,7 +127,7 @@ export default function rulesExtension(pi: ExtensionAPI) {
         })
       }
 
-      ctx.ui.notify(`Loaded ${ruleFiles.length} rule(s) from ~/.pi/agent/rules/`, 'info')
+      ctx.ui.notify(`Loaded ${ruleFiles.length} rule(s) from ${rulesDir}`, 'info')
     }
   })
 

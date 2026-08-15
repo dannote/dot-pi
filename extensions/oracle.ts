@@ -150,8 +150,8 @@ export const DEFAULT_CONFIG: OracleConfig = {
   }
 }
 
-function loadOracleConfig(cwd: string): OracleConfig {
-  const [globalSettings, projectSettings] = readLayeredSettings(cwd)
+function loadOracleConfig(cwd: string, projectTrusted: boolean): OracleConfig {
+  const [globalSettings, projectSettings = {}] = readLayeredSettings(cwd, { projectTrusted })
   const merged = deepMerge(
     DEFAULT_CONFIG as unknown as Record<string, unknown>,
     globalSettings.oracle
@@ -433,7 +433,11 @@ async function runCustomCompaction(
     event.preparation,
     model,
     auth.apiKey,
-    auth.headers,
+    Object.fromEntries(
+      Object.entries(auth.headers ?? {}).filter(
+        (entry): entry is [string, string] => entry[1] !== null
+      )
+    ),
     compactionInstructions(config),
     event.signal,
     config.precompact.thinking
@@ -578,7 +582,7 @@ export default function oracle(pi: ExtensionAPI) {
 
       await ctx.waitForIdle()
 
-      const config = loadOracleConfig(ctx.cwd)
+      const config = loadOracleConfig(ctx.cwd, ctx.isProjectTrusted())
       let intent: OracleIntent = args.trim() ? 'ask' : config.defaultIntent
       let question = args.trim()
 

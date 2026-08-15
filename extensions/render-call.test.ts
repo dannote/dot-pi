@@ -40,6 +40,16 @@ function collectTools(): RegisteredTool[] {
   return tools.filter((tool) => tool.renderCall)
 }
 
+describe('interactive tool execution', () => {
+  test('serializes tools that require exclusive user input', () => {
+    const tools = collectTools()
+    expect(tools.find((tool) => tool.name === 'question')?.executionMode).toBe('sequential')
+    expect(tools.find((tool) => tool.name === 'choose_from_options')?.executionMode).toBe(
+      'sequential'
+    )
+  })
+})
+
 describe('tool renderCall streaming start', () => {
   test('does not render undefined when args are unavailable', () => {
     const rendered = collectTools().map((tool) => {

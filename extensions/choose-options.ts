@@ -86,6 +86,7 @@ export default function chooseOptions(pi: ExtensionAPI) {
     label: 'Choose Options',
     description: `Ask the user to choose from options/next steps. ${NONE_OPTION_LABEL} is automatic. Customize user-facing action labels. ${ACTION_EXAMPLES}`,
     parameters: ParamsSchema,
+    executionMode: 'sequential',
 
     async execute(_toolCallId, params, signal, _onUpdate, ctx) {
       const options = params.options

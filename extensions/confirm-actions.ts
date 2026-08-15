@@ -155,7 +155,7 @@ export default function (pi: ExtensionAPI) {
   let commandRules = DEFAULT_COMMAND_RULES
 
   pi.on('session_start', (_event, ctx) => {
-    commandRules = loadCommandRules(ctx.cwd)
+    commandRules = loadCommandRules(ctx.cwd, ctx.isProjectTrusted())
   })
 
   pi.on('tool_call', async (event, ctx) => {
@@ -744,8 +744,8 @@ function isFlag(arg: string): boolean {
   return arg.startsWith('-') && arg !== '-'
 }
 
-function loadCommandRules(cwd: string): CommandRule[] {
-  const settings = readLayeredSettings(cwd)
+function loadCommandRules(cwd: string, projectTrusted: boolean): CommandRule[] {
+  const settings = readLayeredSettings(cwd, { projectTrusted })
   const groups = Object.assign({}, ...settings.map((item) => readConfirmActionGroups(item)))
   const customRules = settings.flatMap(readCommandRules)
 

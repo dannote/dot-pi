@@ -50,9 +50,10 @@ export default function question(pi: ExtensionAPI) {
     description:
       'Ask the user a question and let them pick from options. Use when you need user input to proceed.',
     parameters: QuestionParams,
+    executionMode: 'sequential',
 
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-      if (!ctx.hasUI) {
+      if (ctx.mode !== 'tui') {
         return toolError(
           'UI not available (running in non-interactive mode)',
           questionDetails(
