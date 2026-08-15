@@ -10,9 +10,9 @@ Minimal operating notes for this Pi setup.
 - `choose_from_options` — LLM-triggered TUI picker for numbered options/next-step lists; use it when the user should choose instead of typing `1,3`.
 - `/quote` / `ctrl+/` — quote assistant text into the editor with `>` prefixes, then write the comment below it. Select text and press `ctrl+/`; it uses native selection APIs first and avoids stale clipboard text for the shortcut.
 - `/ga` — minimal approval to continue the current path.
-- `/gaa` / `/all` — go ahead with all pending review/plan items, not one-by-one.
-- `/lgtm` — review/verification before trusting changes.
-- `/verify` — focused validation.
+- `/gaa` / `/all` — aliases for all currently agreed pending items; do not invent scope or proceed one-by-one.
+- `/lgtm` — proceed with the agreed implementation, then verify and summarize.
+- `/verify` — run relevant project checks and real runtime/UI validation when applicable.
 - `/retry` — recover after failed checks or an interrupted attempt.
 - `/nobc` — do not keep backward compatibility for names/config introduced in the current unreleased change.
 

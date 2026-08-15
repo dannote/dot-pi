@@ -146,6 +146,7 @@ Slash command priority can be configured in `~/.pi/agent/settings.json` or `.pi/
 {
   "slashCommandPriority": [
     "ga",
+    "gaa",
     "all",
     "wn",
     "steps",
@@ -203,7 +204,7 @@ My usual coding flow:
 1. Use `/ga` for plain “go ahead”.
 2. Use `/wn` for quick orientation, `/steps [N]` for lists, and `/big [N]` for coarse work chunks.
 3. Use `/rtfm`, `/ground`, `/proper`, or `/minimal` when extra intent matters.
-4. Use `/all` only for already agreed pending items.
+4. Use `/gaa` or `/all` only for already agreed pending items.
 5. Use `/retry` for tighter recovery.
 6. Use `/stop` when the trajectory is wrong.
 7. Use `/push` once work is coherent; use `/release` only for release prep.
@@ -214,7 +215,9 @@ My usual coding flow:
 | `/ar`            | `autoresearch loop ended... resume`         | Resume experiment loop from saved state; run and log next experiment.                                                          |
 | `/big [N]`       | `next big 10 steps`                         | Exactly N coarse work chunks, no microsteps. Defaults to 7.                                                                    |
 | `/ga`            | `go ahead`                                  | Plain approval to continue.                                                                                                    |
+| `/gaa`           | `go ahead with all agreed items`            | Personal shorthand alias for `/all`.                                                                                           |
 | `/ground`        | `read existing APIs/docs first`             | Inspect existing code/docs/upstream APIs; summarize patterns and minimal path. No edits.                                       |
+| `/lgtm`          | `looks good, implement it`                  | Proceed with the agreed implementation, verify, and summarize.                                                                 |
 | `/minimal`       | `too many entities`, `clean/minimal`        | Remove unnecessary wrappers/entities/shims/hand-rolled logic; reuse mechanisms.                                                |
 | `/nobc`          | `no backward compatibility for new stuff`   | Replace newly introduced names/config cleanly; keep compatibility only for real released users.                                |
 | `/oracle [q]`    | `ask the expensive model`                   | Pre-compacts/reduces context, switches model, answers, then restores.                                                          |

@@ -1,5 +1,5 @@
 ---
-description: Go ahead with all pending items
+description: Alias for /all — do all agreed pending items
 ---
 
-Go ahead with all pending items. Ask only if blocked.
+Do all currently agreed pending items. Do not invent additional scope. Ask only if blocked.

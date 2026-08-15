@@ -2,4 +2,4 @@
 description: Approve and proceed
 ---
 
-Proceed. Don’t ask unless blocked. Implement, summarize.
+Proceed with the currently agreed implementation. Ask only if blocked. Verify and summarize.

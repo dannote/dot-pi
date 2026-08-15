@@ -1,8 +1,22 @@
 # Development Guidelines
 
+Pi reads this `AGENTS.md` automatically when working in this repository. Keep durable dot-pi development policy here; use prompt templates for turn-specific intent and `rules/` for optional personal preferences.
+
 ## Installation
 
-Enable extensions, skills, and rules by creating symlinks in `~/.pi/agent/`:
+Install the complete package with Pi:
+
+```bash
+pi install git:github.com/dannote/dot-pi
+```
+
+For a project-local install:
+
+```bash
+pi install git:github.com/dannote/dot-pi -l
+```
+
+Use direct symlinks only when enabling individual optional resources from a manual checkout:
 
 ```bash
 # Extensions
@@ -15,7 +29,7 @@ ln -s /path/to/dot-pi/skills/ai-news ~/.pi/agent/skills/
 ln -s /path/to/dot-pi/rules/typescript.md ~/.pi/agent/rules/
 ```
 
-Each symlink points directly to the source file or directory. No intermediate symlinks.
+Each symlink points directly to the source file or directory. No intermediate symlinks. Pi discovers this repository's `AGENTS.md` natively; do not symlink it into `~/.pi/agent/`.
 
 ## Adding New Components
 

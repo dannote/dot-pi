@@ -2,4 +2,4 @@
 description: Commit and push
 ---
 
-Check status. Commit in repo style. Push. Preview PR/release steps if needed.
+Review status and diff. Keep unrelated changes separate. Run required checks, commit in repository style, and push the current branch.

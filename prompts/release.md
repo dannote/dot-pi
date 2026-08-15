@@ -2,4 +2,4 @@
 description: Prepare release
 ---
 
-Prepare release: inspect process, update metadata/docs, run checks. Don’t publish without confirmation.
+Prepare the appropriate package release using the package-release workflow. Do not publish without explicit confirmation.

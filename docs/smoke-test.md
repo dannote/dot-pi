@@ -21,7 +21,7 @@ Start a fresh TUI session from this repo.
 - `/discuss whether to keep polishing` — discusses tradeoffs without editing files, running commands, committing, or pushing.
 - `/recap` — covers goal, state, decisions, open threads, drift, best action.
 - `/nobc` — expands to the sharp no-backcompat instruction.
-- `/gaa` — proceeds with all pending items, asks only if blocked.
+- `/gaa` and `/all` — expand to the same instruction: complete only currently agreed pending items, invent no additional scope, and ask only if blocked.
 
 ### Quote workflow
 
@@ -59,6 +59,9 @@ Trigger only harmless/dummy commands and cancel them.
 - `git push origin master` should ask before pushing commits.
 - `git push --force-with-lease` should ask before force push.
 - `git reset --hard HEAD` should ask before hard reset.
+- `sudo true` should ask before privileged execution.
+- `rm -rf /tmp/dot-pi-confirm-actions-smoke` should ask before recursive deletion.
+- `gh secret set TEST_TOKEN` should ask before mutating repository secrets.
 - Cancel each dialog.
 
 ### Notifications

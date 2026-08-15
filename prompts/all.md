@@ -1,5 +1,5 @@
 ---
-description: Do all pending items
+description: Do all agreed pending items
 ---
 
-Do all pending items. Ask only if blocked.
+Do all currently agreed pending items. Do not invent additional scope. Ask only if blocked.
