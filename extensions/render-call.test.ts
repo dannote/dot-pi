@@ -7,7 +7,6 @@ import chooseOptions from './choose-options'
 import codesearch from './codesearch'
 import context7 from './context7'
 import lsp from './lsp'
-import question from './question'
 import webfetch from './webfetch'
 import websearch from './websearch'
 import { renderComponentText, testTheme } from './shared/test-utils'
@@ -30,7 +29,6 @@ function collectTools(): RegisteredTool[] {
     codesearch,
     context7,
     lsp,
-    question,
     webfetch,
     websearch
   ]) {
@@ -43,7 +41,6 @@ function collectTools(): RegisteredTool[] {
 describe('interactive tool execution', () => {
   test('serializes tools that require exclusive user input', () => {
     const tools = collectTools()
-    expect(tools.find((tool) => tool.name === 'question')?.executionMode).toBe('sequential')
     expect(tools.find((tool) => tool.name === 'choose_from_options')?.executionMode).toBe(
       'sequential'
     )

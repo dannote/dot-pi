@@ -45,7 +45,7 @@ function commandContext() {
 
 describe('plan mode', () => {
   test('preserves extension tools and restores the exact previous tool set', async () => {
-    const initial = ['read', 'bash', 'edit', 'write', 'question', 'lsp', 'websearch']
+    const initial = ['read', 'bash', 'edit', 'write', 'choose_from_options', 'lsp', 'websearch']
     const harness = setupPlanMode(initial)
     const toggle = harness.commands.get('plan')
     if (!toggle) throw new Error('plan command not registered')
@@ -54,7 +54,7 @@ describe('plan mode', () => {
     expect(harness.getActiveTools()).toEqual([
       'read',
       'bash',
-      'question',
+      'choose_from_options',
       'lsp',
       'websearch',
       'grep',

@@ -133,7 +133,6 @@ The default install focuses on broadly useful, low-surprise tools.
 | `lsp/`                   | LSP tools: definitions, references, diagnostics, rename                                | Install language servers as needed                                                                     |
 | `notify.ts`              | Desktop notification when work completes                                               | macOS notifications enabled                                                                            |
 | `oracle.ts`              | `/oracle`: ask an expensive model with pre-compaction and aggressive context reduction | Configure `oracle.model` in settings                                                                   |
-| `question.ts`            | Let the agent ask selectable questions                                                 | None                                                                                                   |
 | `quote.ts`               | `/quote` or `ctrl+/`: insert selected/copied text as `>` email-style quote             | Optional native `selection-hook`; clipboard fallback commands (`pbpaste`, `wl-paste`, `xclip`, `xsel`) |
 | `refactor-discipline.ts` | Add semantic refactoring discipline to the system prompt                               | None                                                                                                   |
 | `webfetch/`              | Fetch URL content as markdown/text/html/json                                           | None                                                                                                   |
@@ -171,11 +170,13 @@ Slash command priority can be configured in `~/.pi/agent/settings.json` or `.pi/
 
 Project settings append after user settings. The extension only changes autocomplete order; commands still come from normal Pi prompt/extension/skill discovery.
 
-Action confirmations use shell-style argv parsing, not regex matching. Defaults cover publishing/editing GitHub/GitLab issues, PRs/MRs, comments, reviews, GitHub repo/release mutations, mutating `gh api` calls, Gmail writes via `gws gmail`, X/Twitter mutations via `bird`, git pushes/risky git actions, package publishing, releases, and common deploy CLIs. Tune groups or add local rules in `~/.pi/agent/settings.json` or `.pi/settings.json`:
+Action confirmations use shell-style argv parsing, not regex matching. Defaults cover recursive file deletion, suspicious world-writable modes, privileged commands, publishing/editing GitHub/GitLab issues, PRs/MRs, comments, reviews, repository/release/secret/variable mutations, mutating `gh api` calls, Gmail writes via `gws gmail`, X/Twitter mutations via `bird`, git pushes/risky git actions, package publishing, releases, and common deploy CLIs. Tune groups or add local rules in `~/.pi/agent/settings.json` or `.pi/settings.json`:
 
 ```jsonc
 {
   "confirmActionGroups": {
+    "filesystem": true,
+    "privilege": true,
     "github": true,
     "gitlab": true,
     "git": true,
@@ -213,7 +214,7 @@ My usual coding flow:
 | `/ar`            | `autoresearch loop ended... resume`         | Resume experiment loop from saved state; run and log next experiment.                                                          |
 | `/big [N]`       | `next big 10 steps`                         | Exactly N coarse work chunks, no microsteps. Defaults to 7.                                                                    |
 | `/ga`            | `go ahead`                                  | Plain approval to continue.                                                                                                    |
-| `/ground`        | `read existing APIs/docs first`             | Inspect existing code/docs/upstream APIs; summarize patterns and minimal path. No edits.                                      |
+| `/ground`        | `read existing APIs/docs first`             | Inspect existing code/docs/upstream APIs; summarize patterns and minimal path. No edits.                                       |
 | `/minimal`       | `too many entities`, `clean/minimal`        | Remove unnecessary wrappers/entities/shims/hand-rolled logic; reuse mechanisms.                                                |
 | `/nobc`          | `no backward compatibility for new stuff`   | Replace newly introduced names/config cleanly; keep compatibility only for real released users.                                |
 | `/oracle [q]`    | `ask the expensive model`                   | Pre-compacts/reduces context, switches model, answers, then restores.                                                          |
@@ -300,7 +301,6 @@ pi -e /path/to/dot-pi/extensions/coach.ts
 | `critic/`              | Experimental shadow-review loop                                                   |
 | `decision-guidance.ts` | Experimental trajectory guidance                                                  |
 | `ghost-tutor.ts`       | Quiet model-generated workflow nudge after the agent stops                        |
-| `permission-gate.ts`   | Opinionated command blocking                                                      |
 | `plan-mode/`           | Experimental read-only planning mode                                              |
 | `provider/`            | Experimental dynamic provider registration                                        |
 | `rules.ts`             | Personal rule loader for symlinked files in `~/.pi/agent/rules/`                  |

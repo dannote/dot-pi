@@ -34,6 +34,8 @@ const GITHUB_RULES: CommandRule[] = [
   exact(['gh', 'pr', 'edit'], 'Edit GitHub PR'),
   exact(['gh', 'pr', 'comment'], 'Publish GitHub PR comment'),
   exact(['gh', 'pr', 'review'], 'Publish GitHub PR review'),
+  exact(['gh', 'pr', 'merge'], 'Merge GitHub PR'),
+  exact(['gh', 'pr', 'close'], 'Close GitHub PR'),
   exact(['gh', 'issue', 'create'], 'Create GitHub issue'),
   exact(['gh', 'issue', 'edit'], 'Edit GitHub issue'),
   exact(['gh', 'issue', 'comment'], 'Publish GitHub issue comment'),
@@ -46,6 +48,8 @@ const GITHUB_RULES: CommandRule[] = [
   exact(['gh', 'repo', 'rename'], 'Rename GitHub repo'),
   exact(['gh', 'repo', 'transfer'], 'Transfer GitHub repo'),
   matched(['gh', 'repo', 'deploy-key'], 'Mutate GitHub repo deploy keys', isMutatingGhSubcommand),
+  matched(['gh', 'secret'], 'Mutate GitHub secrets', isMutatingGhSubcommand),
+  matched(['gh', 'variable'], 'Mutate GitHub variables', isMutatingGhSubcommand),
   exact(['gh', 'repo', 'set-default'], 'Change default GitHub repo'),
   exact(['gh', 'release', 'create'], 'Publish GitHub release'),
   exact(['gh', 'release', 'delete'], 'Delete GitHub release'),
@@ -57,13 +61,29 @@ const GITLAB_RULES: CommandRule[] = [
   exact(['glab', 'mr', 'create'], 'Publish GitLab MR'),
   exact(['glab', 'mr', 'update'], 'Edit GitLab MR'),
   exact(['glab', 'mr', 'note'], 'Publish GitLab MR comment'),
+  exact(['glab', 'mr', 'merge'], 'Merge GitLab MR'),
+  exact(['glab', 'mr', 'close'], 'Close GitLab MR'),
   exact(['glab', 'issue', 'create'], 'Publish GitLab issue'),
   exact(['glab', 'issue', 'update'], 'Edit GitLab issue'),
   exact(['glab', 'issue', 'note'], 'Publish GitLab issue comment'),
   exact(['glab', 'issue', 'close'], 'Close GitLab issue'),
   exact(['glab', 'issue', 'delete'], 'Delete GitLab issue'),
-  exact(['glab', 'release', 'create'], 'Publish GitLab release')
+  exact(['glab', 'release', 'create'], 'Publish GitLab release'),
+  exact(['glab', 'release', 'delete'], 'Delete GitLab release'),
+  exact(['glab', 'repo', 'create'], 'Create GitLab repo'),
+  exact(['glab', 'repo', 'delete'], 'Delete GitLab repo'),
+  exact(['glab', 'repo', 'archive'], 'Archive GitLab repo'),
+  exact(['glab', 'repo', 'unarchive'], 'Unarchive GitLab repo'),
+  matched(['glab', 'variable'], 'Mutate GitLab variables', isMutatingGlabSubcommand)
 ]
+
+const FILESYSTEM_RULES: CommandRule[] = [
+  matched(['rm'], 'Recursively remove files', isRecursiveRm),
+  matched(['chmod'], 'Set world-writable permissions', hasWorldWritableMode),
+  matched(['chown'], 'Set suspicious numeric ownership', hasWorldWritableMode)
+]
+
+const PRIVILEGE_RULES: CommandRule[] = [exact(['sudo'], 'Run command with elevated privileges')]
 
 const GMAIL_RULES: CommandRule[] = [matched(['gws', 'gmail'], 'Mutate Gmail', isMutatingGmail)]
 
@@ -111,6 +131,8 @@ const EXECUTION_SURFACE_RULES: CommandRule[] = [
 const RULE_GROUPS = {
   github: GITHUB_RULES,
   gitlab: GITLAB_RULES,
+  filesystem: FILESYSTEM_RULES,
+  privilege: PRIVILEGE_RULES,
   gmail: GMAIL_RULES,
   twitter: TWITTER_RULES,
   git: GIT_RULES,
@@ -242,11 +264,11 @@ export function matchCommandRule(command: string, rules: CommandRule[]): Command
   if (parsed.parseFailed) return PARSE_ERROR_RULE
 
   for (const invocation of parsed.invocations) {
+    const directMatch = findMatchingRule(invocation.argv, rules)
+    if (directMatch) return directMatch
+
     const normalized = normalizeInvocation(invocation.argv)
-    const match = rules.find((rule) => {
-      const comparable = normalizeToolInvocation(normalized, rule.argv)
-      return startsWithArgv(comparable, rule.argv) && (rule.matches?.(comparable) ?? true)
-    })
+    const match = findMatchingRule(normalized, rules)
     if (match) return match
 
     if (invocation.dynamicName) return DYNAMIC_COMMAND_NAME_RULE
@@ -256,6 +278,13 @@ export function matchCommandRule(command: string, rules: CommandRule[]): Command
 
 export function parseInvocations(command: string): string[][] {
   return parseCommand(command).invocations.map((invocation) => invocation.argv)
+}
+
+function findMatchingRule(argv: string[], rules: CommandRule[]): CommandRule | undefined {
+  return rules.find((rule) => {
+    const comparable = normalizeToolInvocation(argv, rule.argv)
+    return startsWithArgv(comparable, rule.argv) && (rule.matches?.(comparable) ?? true)
+  })
 }
 
 type ParsedInvocation = {
@@ -568,7 +597,19 @@ function isMutatingGhApi(argv: string[]): boolean {
 }
 
 function isMutatingGhSubcommand(argv: string[]): boolean {
-  return argv.some((arg) => ['add', 'delete', 'remove'].includes(arg))
+  return argv.some((arg) => ['add', 'set', 'delete', 'remove'].includes(arg))
+}
+
+function isMutatingGlabSubcommand(argv: string[]): boolean {
+  return argv.some((arg) => ['set', 'delete', 'remove', 'update'].includes(arg))
+}
+
+function isRecursiveRm(argv: string[]): boolean {
+  return hasAnyFlag(argv, ['-r', '-R', '--recursive'])
+}
+
+function hasWorldWritableMode(argv: string[]): boolean {
+  return argv.some((arg) => /^\d*777$/.test(arg))
 }
 
 function isMutatingGmail(argv: string[]): boolean {

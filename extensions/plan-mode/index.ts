@@ -19,7 +19,7 @@ import { Key } from '@earendil-works/pi-tui'
 import { extractTodoItems, isSafeCommand, markCompletedSteps, type TodoItem } from './utils.js'
 
 // Tools
-const PLAN_MODE_TOOLS = ['read', 'bash', 'grep', 'find', 'ls', 'question']
+const PLAN_MODE_TOOLS = ['read', 'bash', 'grep', 'find', 'ls', 'choose_from_options']
 const NORMAL_MODE_TOOLS = ['read', 'bash', 'edit', 'write']
 const PLAN_MODE_DISABLED_TOOLS = new Set<string>(['edit', 'write'])
 const PLAN_MANAGED_TOOLS = new Set<string>([...PLAN_MODE_TOOLS, ...NORMAL_MODE_TOOLS])
@@ -215,7 +215,7 @@ Restrictions:
 - Bash is restricted to an allowlist of read-only commands
 - Do not create scratch files
 
-Use the question tool when clarification is necessary.
+Use choose_from_options when clarification is necessary.
 
 Output requirements:
 - Keep the plan extremely concise; sacrifice grammar for concision

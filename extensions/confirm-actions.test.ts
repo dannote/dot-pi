@@ -86,11 +86,61 @@ describe('matchCommandRule', () => {
     )
   })
 
+  test('default rules include legacy local safety policies', () => {
+    expect(matchCommandRule('rm -rf build', DEFAULT_COMMAND_RULES)?.label).toBe(
+      'Recursively remove files'
+    )
+    expect(matchCommandRule('rm -r build', DEFAULT_COMMAND_RULES)?.label).toBe(
+      'Recursively remove files'
+    )
+    expect(matchCommandRule('rm build.log', DEFAULT_COMMAND_RULES)).toBeUndefined()
+    expect(matchCommandRule('sudo apt update', DEFAULT_COMMAND_RULES)?.label).toBe(
+      'Run command with elevated privileges'
+    )
+    expect(matchCommandRule('sudo -E gh pr create', DEFAULT_COMMAND_RULES)?.label).toBe(
+      'Run command with elevated privileges'
+    )
+    expect(matchCommandRule('chmod 777 script.sh', DEFAULT_COMMAND_RULES)?.label).toBe(
+      'Set world-writable permissions'
+    )
+    expect(matchCommandRule('chmod 755 script.sh', DEFAULT_COMMAND_RULES)).toBeUndefined()
+    expect(matchCommandRule('echo "rm -rf build"', DEFAULT_COMMAND_RULES)).toBeUndefined()
+  })
+
+  test('default rules cover GitHub and GitLab mutation policies', () => {
+    expect(matchCommandRule('gh pr merge 42', DEFAULT_COMMAND_RULES)?.label).toBe('Merge GitHub PR')
+    expect(matchCommandRule('gh pr close 42', DEFAULT_COMMAND_RULES)?.label).toBe('Close GitHub PR')
+    expect(matchCommandRule('gh secret set TOKEN', DEFAULT_COMMAND_RULES)?.label).toBe(
+      'Mutate GitHub secrets'
+    )
+    expect(matchCommandRule('gh secret list', DEFAULT_COMMAND_RULES)).toBeUndefined()
+    expect(matchCommandRule('gh variable delete MODE', DEFAULT_COMMAND_RULES)?.label).toBe(
+      'Mutate GitHub variables'
+    )
+    expect(matchCommandRule('glab repo delete group/project', DEFAULT_COMMAND_RULES)?.label).toBe(
+      'Delete GitLab repo'
+    )
+    expect(matchCommandRule('glab mr merge 42', DEFAULT_COMMAND_RULES)?.label).toBe(
+      'Merge GitLab MR'
+    )
+    expect(matchCommandRule('glab variable update TOKEN value', DEFAULT_COMMAND_RULES)?.label).toBe(
+      'Mutate GitLab variables'
+    )
+    expect(matchCommandRule('glab variable list', DEFAULT_COMMAND_RULES)).toBeUndefined()
+  })
+
   test('can disable default rule groups', () => {
-    const rules = buildDefaultCommandRules({ git: false, twitter: false })
+    const rules = buildDefaultCommandRules({
+      git: false,
+      twitter: false,
+      filesystem: false,
+      privilege: false
+    })
 
     expect(matchCommandRule('git push origin master', rules)).toBeUndefined()
     expect(matchCommandRule('bird tweet "hello"', rules)).toBeUndefined()
+    expect(matchCommandRule('rm -rf build', rules)).toBeUndefined()
+    expect(matchCommandRule('sudo apt update', rules)).toBeUndefined()
     expect(matchCommandRule('gh repo delete acme/app', rules)?.label).toBe('Delete GitHub repo')
   })
 
@@ -204,7 +254,7 @@ describe('matchCommandRule', () => {
       'Run shell command string'
     )
     expect(matchCommandRule('sudo sh -c "gh issue close 2"', DEFAULT_COMMAND_RULES)?.label).toBe(
-      'Run shell command string'
+      'Run command with elevated privileges'
     )
     expect(matchCommandRule('bash -lc "gh issue close 2"', DEFAULT_COMMAND_RULES)?.label).toBe(
       'Run shell command string'
