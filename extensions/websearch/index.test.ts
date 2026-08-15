@@ -28,6 +28,32 @@ describe('buildExaSearchRequest', () => {
     })
   })
 
+  test('drops empty optional placeholders while preserving meaningful falsy values', () => {
+    expect(
+      buildExaSearchRequest({
+        query: 'object storage',
+        additionalQueries: [],
+        includeDomains: [],
+        excludeText: [''],
+        includeSections: [],
+        systemPrompt: '',
+        outputSchema: {},
+        summary: false,
+        includeHtmlTags: false,
+        maxAgeHours: 0
+      })
+    ).toEqual({
+      query: 'object storage',
+      numResults: 8,
+      type: 'auto',
+      contents: {
+        text: { maxCharacters: 10000, includeHtmlTags: false },
+        summary: false,
+        maxAgeHours: 0
+      }
+    })
+  })
+
   test('drops filters unsupported by people search', () => {
     expect(
       buildExaSearchRequest({

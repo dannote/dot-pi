@@ -15,8 +15,27 @@ function getBaseUrl(): string {
   return env('EXA_ENDPOINT_URL') || 'https://api.exa.ai'
 }
 
+function compactRequestValue(value: unknown): unknown {
+  if (value === undefined) return undefined
+  if (typeof value === 'string' && value.trim() === '') return undefined
+
+  if (Array.isArray(value)) {
+    const entries = value.map(compactRequestValue).filter((entry) => entry !== undefined)
+    return entries.length > 0 ? entries : undefined
+  }
+
+  if (value !== null && typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .map(([key, entry]) => [key, compactRequestValue(entry)] as const)
+      .filter(([, entry]) => entry !== undefined)
+    return entries.length > 0 ? Object.fromEntries(entries) : undefined
+  }
+
+  return value
+}
+
 function cleanObject(value: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined))
+  return (compactRequestValue(value) as Record<string, unknown> | undefined) ?? {}
 }
 
 function formatSynthesis(output: unknown): string | undefined {
