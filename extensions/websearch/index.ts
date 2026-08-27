@@ -65,8 +65,9 @@ Usage notes:
 - Provides up-to-date information beyond knowledge cutoff
 - Search types: 'auto' (default), 'instant' (lowest latency), 'fast' (low latency), 'deep-lite', 'deep', 'deep-reasoning'
 - For deep search variants, provide additionalQueries with query variations for better results
-- Use category to focus on specific content: 'company', 'research paper', 'news', 'people', 'personal site', 'financial report'
-- IMPORTANT: company/people do not support date filters or excludeDomains; people includeDomains only accepts LinkedIn domains
+- sourceType is an optional source-type filter. Omit it for broad web search; use it only when the requested source type clearly matches one of the supported values.
+- Do not combine a sourceType with domains or filters that the API does not support for that source type.
+- For source-specific discovery, prefer includeDomains and precise query terms.
 - Filter by domains (includeDomains/excludeDomains), text content (includeText/excludeText), and date ranges where supported
 - Control content freshness with maxAgeHours (0=always fresh, 24=accept 24h cache, -1=cache only, omit=default)
 - Prefer highlights for agent workflows; use full text only when needed and cap contextMaxCharacters
@@ -77,12 +78,18 @@ const WebSearchParams = Type.Object({
   query: Type.String({ description: 'Web search query' }),
   additionalQueries: Type.Optional(
     Type.Array(Type.String(), {
+      minItems: 1,
+      maxItems: 10,
       description:
         "Query variations for deep search. Only works with type='deep'. Provide 2-5 alternative phrasings for comprehensive results."
     })
   ),
   numResults: Type.Optional(
-    Type.Number({ description: 'Number of search results to return (default: 8, max: 100)' })
+    Type.Integer({
+      minimum: 1,
+      maximum: 100,
+      description: 'Number of search results to return (default: 10, max: 100)'
+    })
   ),
   type: Type.Optional(
     Type.Union(
@@ -100,29 +107,34 @@ const WebSearchParams = Type.Object({
       }
     )
   ),
-  category: Type.Optional(
+  sourceType: Type.Optional(
     Type.Union(
       [
+        Type.Literal('general'),
+        Type.Literal('publication'),
         Type.Literal('company'),
-        Type.Literal('research paper'),
         Type.Literal('news'),
         Type.Literal('people'),
-        Type.Literal('personal site'),
-        Type.Literal('financial report')
+        Type.Literal('personal_site'),
+        Type.Literal('financial_report')
       ],
       {
-        description: 'Focus on a specific content category for higher quality results'
+        description:
+          'Optional source-type filter. Use general for broad search; otherwise choose the source type that matches the request.'
       }
     )
   ),
   includeDomains: Type.Optional(
     Type.Array(Type.String(), {
-      description: "Only return results from these domains (e.g. ['arxiv.org', 'github.com'])"
+      maxItems: 1200,
+      description:
+        "Only return results from these domains (max 1200; e.g. ['arxiv.org', 'github.com'])"
     })
   ),
   excludeDomains: Type.Optional(
     Type.Array(Type.String(), {
-      description: 'Exclude results from these domains'
+      maxItems: 1200,
+      description: 'Exclude results from these domains (max 1200)'
     })
   ),
   includeText: Type.Optional(
@@ -136,18 +148,21 @@ const WebSearchParams = Type.Object({
     })
   ),
   startPublishedDate: Type.Optional(
-    Type.String({
+    Type.Union([Type.Literal(''), Type.String({ format: 'date-time' })], {
       description:
         "Only results published after this date (ISO 8601, e.g. '2025-01-01T00:00:00.000Z')"
     })
   ),
   endPublishedDate: Type.Optional(
-    Type.String({ description: 'Only results published before this date (ISO 8601)' })
+    Type.Union([Type.Literal(''), Type.String({ format: 'date-time' })], {
+      description: 'Only results published before this date (ISO 8601)'
+    })
   ),
   maxAgeHours: Type.Optional(
-    Type.Number({
-      description:
-        'Max age of cached content in hours. 0=always livecrawl, 24=accept 24h cache, -1=cache only, omit=default'
+    Type.Integer({
+      minimum: -1,
+      maximum: 720,
+      description: 'Max age of cached content in hours. 0=always fresh, -1=cache only, omit=default'
     })
   ),
   highlights: Type.Optional(
@@ -160,9 +175,7 @@ const WebSearchParams = Type.Object({
         query: Type.Optional(
           Type.String({ description: 'Custom query guiding highlight selection' })
         ),
-        maxCharacters: Type.Optional(
-          Type.Number({ description: 'Cap total highlight characters per result' })
-        )
+        maxCharacters: Type.Optional(Type.Integer({ minimum: 1, maximum: 10000 }))
       })
     ])
   ),
@@ -178,7 +191,11 @@ const WebSearchParams = Type.Object({
     ])
   ),
   contextMaxCharacters: Type.Optional(
-    Type.Number({ description: 'Maximum full-text characters per result (default: 10000)' })
+    Type.Integer({
+      minimum: 1,
+      maximum: 10000,
+      description: 'Maximum full-text characters per result (default: 10000)'
+    })
   ),
   includeHtmlTags: Type.Optional(
     Type.Boolean({ description: 'Preserve HTML tags in returned full text (default: false)' })
@@ -189,18 +206,38 @@ const WebSearchParams = Type.Object({
     })
   ),
   includeSections: Type.Optional(
-    Type.Array(Type.String(), {
-      description: 'Only include page sections such as header, body, footer, metadata'
-    })
+    Type.Array(
+      Type.Union([
+        Type.Literal('header'),
+        Type.Literal('navigation'),
+        Type.Literal('banner'),
+        Type.Literal('body'),
+        Type.Literal('sidebar'),
+        Type.Literal('footer'),
+        Type.Literal('metadata')
+      ]),
+      { description: 'Only include content from these page sections' }
+    )
   ),
   excludeSections: Type.Optional(
-    Type.Array(Type.String(), {
-      description: 'Exclude page sections such as navigation, sidebar, footer'
-    })
+    Type.Array(
+      Type.Union([
+        Type.Literal('header'),
+        Type.Literal('navigation'),
+        Type.Literal('banner'),
+        Type.Literal('body'),
+        Type.Literal('sidebar'),
+        Type.Literal('footer'),
+        Type.Literal('metadata')
+      ]),
+      { description: 'Exclude content from these page sections' }
+    )
   ),
   livecrawlTimeout: Type.Optional(
-    Type.Number({
-      description: 'Timeout for livecrawling in milliseconds (recommended 10000-15000)'
+    Type.Integer({
+      minimum: 1,
+      maximum: 90000,
+      description: 'Timeout for livecrawling in milliseconds (default: 10000)'
     })
   ),
   moderation: Type.Optional(Type.Boolean({ description: 'Filter unsafe content from results' })),
@@ -208,7 +245,16 @@ const WebSearchParams = Type.Object({
     Type.String({ description: 'Instructions guiding synthesized output and deep-search planning' })
   ),
   outputSchema: Type.Optional(
-    Type.Any({ description: 'JSON schema for synthesized output.content; increases latency/cost' })
+    Type.Object(
+      {
+        type: Type.Union([Type.Literal('text'), Type.Literal('object')]),
+        description: Type.Optional(Type.String()),
+        properties: Type.Optional(Type.Record(Type.String(), Type.Any())),
+        required: Type.Optional(Type.Array(Type.String())),
+        additionalProperties: Type.Optional(Type.Boolean())
+      },
+      { description: 'JSON schema for synthesized output; root type must be text or object' }
+    )
   ),
   userLocation: Type.Optional(
     Type.String({
@@ -297,7 +343,10 @@ export default function (pi: ExtensionAPI) {
       const args = params ?? {}
       return renderToolCall(theme, 'web', {
         segments: [{ text: args.query }],
-        tags: [args.type && args.type !== 'auto' ? args.type : undefined, args.category],
+        tags: [
+          args.type && args.type !== 'auto' ? args.type : undefined,
+          args.sourceType !== 'general' ? args.sourceType : undefined
+        ],
         suffix: args.numResults ? `${args.numResults} results` : undefined
       })
     },

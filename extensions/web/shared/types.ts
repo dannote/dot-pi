@@ -1,3 +1,19 @@
+export type ExaSourceType =
+  | 'general'
+  | 'publication'
+  | 'company'
+  | 'news'
+  | 'people'
+  | 'personal_site'
+  | 'financial_report'
+export interface ExaOutputSchema {
+  type: 'text' | 'object'
+  description?: string
+  properties?: Record<string, unknown>
+  required?: string[]
+  additionalProperties?: boolean
+}
+
 export type SearchBackendId = 'exa'
 
 export type FetchBackendId = 'local'
@@ -13,7 +29,8 @@ export interface CommonSearchRequest {
 export interface ExaSearchRequest extends CommonSearchRequest {
   backend: 'exa'
   type?: 'auto' | 'instant' | 'fast' | 'deep-lite' | 'deep' | 'deep-reasoning'
-  category?: 'company' | 'research paper' | 'news' | 'people' | 'personal site' | 'financial report'
+  sourceType?: ExaSourceType
+  category?: never
   additionalQueries?: string[]
   includeText?: string[]
   excludeText?: string[]
@@ -30,7 +47,7 @@ export interface ExaSearchRequest extends CommonSearchRequest {
   livecrawlTimeout?: number
   moderation?: boolean
   systemPrompt?: string
-  outputSchema?: unknown
+  outputSchema?: ExaOutputSchema
   userLocation?: string
 }
 
