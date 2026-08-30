@@ -16,7 +16,7 @@ import * as path from 'node:path'
 import * as os from 'node:os'
 import type { AgentMessage } from '@earendil-works/pi-agent-core'
 import { getAgentDir, parseFrontmatter, type ExtensionAPI } from '@earendil-works/pi-coding-agent'
-import { Text } from '@earendil-works/pi-tui'
+import { renderLines } from './shared/render'
 import { minimatch } from 'minimatch'
 
 type RuleFrontmatter = {
@@ -103,7 +103,7 @@ export default function rulesExtension(pi: ExtensionAPI) {
         const shortPath = file.replace(os.homedir(), '~')
         lines.push(theme.fg('dim', `    ${shortPath}`))
       }
-      return new Text(lines.join('\n'), 0, 0)
+      return renderLines(lines)
     }
   )
 

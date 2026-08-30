@@ -1,8 +1,9 @@
 import type { ImageContent, TextContent } from '@earendil-works/pi-ai'
 import { DynamicBorder, getMarkdownTheme } from '@earendil-works/pi-coding-agent'
 import type { Theme } from '@earendil-works/pi-coding-agent'
-import { Container, Markdown, Spacer, Text } from '@earendil-works/pi-tui'
+import { Container, Markdown, Spacer } from '@earendil-works/pi-tui'
 
+import { renderLines } from '../shared/render'
 import type { CriticDetails } from './types'
 
 export function renderCriticReview(
@@ -44,10 +45,10 @@ export function renderCriticReview(
   if (result?.timedOut) {
     header += ` ${theme.fg('error', '[TIMEOUT]')}`
   }
-  container.addChild(new Text(header, 1, 0))
+  container.addChild(renderLines([header]))
 
   if (hasError) {
-    container.addChild(new Text(theme.fg('error', `Error: ${result.error}`), 1, 0))
+    container.addChild(renderLines([theme.fg('error', `Error: ${result.error}`)]))
   }
 
   const contentText = criticContentText(message.content)
@@ -57,13 +58,13 @@ export function renderCriticReview(
 
   const statsParts = criticStats(result)
   if (statsParts.length > 0) {
-    container.addChild(new Text(theme.fg('dim', statsParts.join(' · ')), 1, 0))
+    container.addChild(renderLines([theme.fg('dim', statsParts.join(' · '))]))
   }
 
   if (expanded && details?.context) {
     container.addChild(new Spacer(1))
-    container.addChild(new Text(theme.fg('muted', '─── Context ───'), 1, 0))
-    container.addChild(new Text(theme.fg('dim', details.context), 1, 0))
+    container.addChild(renderLines([theme.fg('muted', '─── Context ───')]))
+    container.addChild(renderLines([theme.fg('dim', details.context)]))
   }
 
   container.addChild(new DynamicBorder((s: string) => theme.fg(borderColor, s)))

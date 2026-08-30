@@ -17,7 +17,8 @@ import type {
   ThinkingContent,
   ToolCall
 } from '@earendil-works/pi-ai'
-import { Box, Text } from '@earendil-works/pi-tui'
+import { renderLines } from './shared/render'
+import { Box } from '@earendil-works/pi-tui'
 import { filterDisplayOnlyMessages, registerDisplayOnlyMessage } from './shared/display-message'
 import { errorMessage } from './shared/errors'
 import { deepMerge, readLayeredSettings } from './shared/settings'
@@ -540,7 +541,7 @@ export default function oracle(pi: ExtensionAPI) {
     (message, _options, theme) => {
       const content = typeof message.content === 'string' ? message.content : ''
       const box = new Box(1, 0, (text) => theme.bg('customMessageBg', text))
-      box.addChild(new Text(theme.fg('dim', content), 0, 0))
+      box.addChild(renderLines([theme.fg('dim', content)]))
       return box
     }
   )

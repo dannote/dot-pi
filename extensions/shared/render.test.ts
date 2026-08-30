@@ -38,6 +38,21 @@ describe('renderLines', () => {
     expect(line).toContain('…')
   })
 
+  test('flattens embedded newlines and carriage returns into physical rows', () => {
+    expect(renderLines(['one\ntwo\r\nthree\rfour'] as string[]).render(120)).toEqual([
+      '',
+      'one',
+      'two',
+      'three',
+      'four'
+    ])
+  })
+
+  test('flattens multiline function output before truncating', () => {
+    expect(
+      renderLines([() => 'first\nsecond\r\nthird'] as Array<() => string>).render(120)
+    ).toEqual(['', 'first', 'second', 'third'])
+  })
   test('supports explicit truncation marker', () => {
     const [, line] = renderTextLinesPreview(['abcdefghijklmnopqrstuvwxyz'], theme, {
       expanded: false,
@@ -114,6 +129,14 @@ describe('renderToolCall', () => {
     expect(line).not.toContain('false')
   })
 
+  test('collapses embedded newlines in single-line tool calls', () => {
+    const [line] = renderToolCall(theme, 'web', {
+      segments: [{ text: 'first\nsecond\r\nthird' }]
+    }).render(120)
+
+    expect(line).toBe('web first second third')
+    expect(line).not.toMatch(/[\r\n]/u)
+  })
   test('truncates long call lines', () => {
     const [line] = renderToolCall(theme, 'fetch', {
       segments: [{ text: 'abcdefghijklmnopqrstuvwxyz' }]

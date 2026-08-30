@@ -1,6 +1,7 @@
 import type { Message } from '@earendil-works/pi-ai'
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent'
-import { Box, Text } from '@earendil-works/pi-tui'
+import { Box } from '@earendil-works/pi-tui'
+import { renderLines } from './shared/render'
 import { registerDisplayOnlyMessage } from './shared/display-message'
 
 export const GHOST_TUTOR_MESSAGE_TYPE = 'ghost-tutor'
@@ -152,7 +153,7 @@ export default function ghostTutor(pi: ExtensionAPI) {
     (message, _options, theme) => {
       const content = extractText(message.content).trim()
       const box = new Box(1, 0, (text) => theme.bg('customMessageBg', text))
-      box.addChild(new Text(theme.fg('dim', content), 0, 0))
+      box.addChild(renderLines([theme.fg('dim', content)]))
       return box
     }
   )

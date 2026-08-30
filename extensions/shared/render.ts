@@ -70,11 +70,15 @@ export function renderLinesWithMarker(lines: RenderLine[], marker: string): Comp
   return {
     render: (width) => [
       '',
-      ...lines.map((line) =>
-        typeof line === 'function'
-          ? truncateLine(line(width), width, marker)
-          : truncateLine(line, width, marker)
-      )
+      ...lines.flatMap((line) => {
+        const value = typeof line === 'function' ? line(width) : line
+        return value
+          .replace(/\r\n|\r|\n/gu, '\n')
+          .split('\n')
+          .map((part) => {
+            return truncateLine(part, width, marker)
+          })
+      })
     ],
     invalidate: () => undefined
   }
@@ -396,7 +400,7 @@ export function truncateLine(text: string, maxWidth: number, marker = '…'): st
 
 export function renderSingleLine(text: string): Component {
   return {
-    render: (width) => [truncateLine(text, width)],
+    render: (width) => [truncateLine(text.replace(/\r\n|\r|\n/gu, ' '), width)],
     invalidate: () => undefined
   }
 }
