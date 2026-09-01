@@ -13,6 +13,7 @@ Review before mutating. Read the repository's `AGENTS.md`, `CONTRIBUTING.md`, PR
 | ------------------------------------------ | ---------------------- | ---------------------------------------------------------------------------- |
 | First review                               | Reviewer               | Evidence-based findings and one recommendation                               |
 | Re-review after feedback                   | Follow-up reviewer     | Status of each requested change plus regression findings                     |
+| Merged or closed PR                        | Auditor                | Retrospective findings and any separate follow-up action                     |
 | CodeRabbit, Copilot, or contributor review | Maintainer             | Independently verified classifications                                       |
 | CI and checks                              | Reviewer               | Attributed pass, PR failure, infrastructure failure, flake, skip, or unknown |
 | Preparing comments                         | Maintainer reviewer    | Exact concise inline-comment draft                                           |
@@ -20,8 +21,9 @@ Review before mutating. Read the repository's `AGENTS.md`, `CONTRIBUTING.md`, PR
 
 - **First review:** inspect the final diff, history, discussion, checks, and relevant source/tests.
 - **Re-review:** build the requested-change list from maintainer reviews, inline threads, author responses, and later commits. Mark each item as maintainer-requested, external suggestion, or newly discovered, then classify it as addressed, partial, unresolved, or obsolete and inspect for regressions.
-- **External review:** verify each CodeRabbit, Copilot, or contributor finding independently; classify it as valid, invalid, stale, duplicate, or low-value.
-- **CI and checks:** attribute each relevant result as passing, failing because of the PR, infrastructure failure, flaky, skipped/not applicable, or unverified.
+- **Merged or closed PR:** review retrospectively. Do not recommend merging, approving, or requesting changes; identify only lessons or a separate follow-up warranted by current code.
+- **External review:** verify each CodeRabbit, Copilot, or contributor finding against the current head, current PR body, and current conversation; classify it as valid, invalid, stale, duplicate, or low-value.
+- **CI and checks:** attribute each relevant result as passing, failing because of the PR, infrastructure failure, flaky, skipped/not applicable, or unverified. Report the actual checks; do not inflate the count with service statuses or infer checks that are not present.
 - **Draft comments:** map valid findings to the smallest useful line range, prefer inline comments, remove duplicates, and show the exact draft.
 - **Fix or merge:** only act after the user explicitly chooses that action. Use `vibe-merge` when reimplementing selected ideas instead of merging a PR wholesale.
 
@@ -29,9 +31,9 @@ Do not conflate these workflows. A request to review is not permission to commen
 
 ## Inspect in this order
 
-1. Establish the base branch, worktree state, PR number, author, scope, and current head SHA.
+1. Establish the PR state, merged/closed time when applicable, base branch, worktree state, PR number, author, scope, current head SHA, and formal review decision.
 2. Read repository guidance and the PR template. Check whether guidance files differ between the base and PR branch.
-3. Read the PR title, body, commits, timeline, reviews, inline comments, and issue conversation. Look for maintainer requests, external suggestions, author replies, resolved threads, and changed scope.
+3. Read the PR title, current body, commits, timeline, formal reviews, inline comments, reactions, and issue conversation. Look for maintainer requests, external suggestions, author replies, resolved threads, and changed scope. Do not treat thanks, emoji, or reactions as approval; attribute formal approvals and change requests to their actual authors, and do not mistake a bot approval for maintainer approval.
 4. Inspect the complete diff against the correct base. Read surrounding source and analogous existing implementations.
 5. Check CI and external reviews. Separate infrastructure failures from failures caused by the change.
 6. Run focused checks and real-runtime or visual validation when the change requires it. Do not claim validation from a command you did not run.
@@ -86,13 +88,9 @@ Treat short follow-ups such as “go ahead” as authorization for the immediate
 
 ## Decision output
 
-End with one recommendation:
+End with one recommendation appropriate to the current PR state:
 
-- approve;
-- request changes;
-- needs clarification or more evidence;
-- fix selected issues ourselves;
-- re-review after new commits; or
-- merge, only when explicitly requested and the repository checks support it.
+- for an open PR: approve, request changes, seek clarification or more evidence, fix selected issues ourselves, re-review after new commits, or merge only when explicitly requested and supported by checks;
+- for a merged or closed PR: no PR action, or a separate follow-up only when current code still warrants one.
 
 Do not use missing description polish or a bot warning alone to label a contributor's work low-effort. Evaluate the code and context separately.
