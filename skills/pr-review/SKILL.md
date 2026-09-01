@@ -20,7 +20,7 @@ Review before mutating. Read the repository's `AGENTS.md`, `CONTRIBUTING.md`, PR
 | Approved fix or merge                      | Maintainer/implementer | Scoped action and validation result                                          |
 
 - **First review:** inspect the final diff, history, discussion, checks, and relevant source/tests.
-- **Re-review:** build the requested-change list from maintainer reviews, inline threads, author responses, and later commits. Mark each item as maintainer-requested, external suggestion, or newly discovered, then classify it as addressed, partial, unresolved, or obsolete and inspect for regressions.
+- **Re-review:** compare the reviewed commit SHA with the current head before classifying anything. Build the requested-change list from maintainer reviews, inline threads, author responses, and later commits. Mark each item as maintainer-requested, external suggestion, or newly discovered, then classify it as addressed, partial, unresolved, or obsolete from the current diff. If no commits or relevant changes followed the review, say so directly; do not infer fixes from the PR body or commit message.
 - **Merged or closed PR:** review retrospectively. Do not recommend merging, approving, or requesting changes; identify only lessons or a separate follow-up warranted by current code.
 - **External review:** verify each CodeRabbit, Copilot, or contributor finding against the current head, current PR body, current conversation, and repository policy; classify it as valid, invalid, stale, duplicate, or low-value. A bot threshold is not a project requirement unless repository guidance or CI makes it one; do not add comments or code solely to satisfy an unsupported metric.
 - **CI and checks:** inspect failing logs, not only check summaries. Attribute each relevant result as passing, failing because of the PR, infrastructure failure, flaky, cancelled/blocked, skipped/not applicable, or unverified. Report the actual checks; do not inflate the count with service statuses or infer checks that are not present.
@@ -35,7 +35,7 @@ Do not conflate these workflows. A request to review is not permission to commen
 2. Read repository guidance and the PR template. Check whether guidance files differ between the base and PR branch.
 3. Read the PR title, current body, commits, timeline, formal reviews, inline comments, reactions, and issue conversation. Look for maintainer requests, external suggestions, author replies, resolved threads, and changed scope. Do not treat thanks, emoji, or reactions as approval; attribute formal approvals and change requests to their actual authors, and do not mistake a bot approval for maintainer approval.
 4. Inspect the complete diff against the correct base. Read surrounding source, analogous existing implementations, definitions of referenced helpers, and nearby tests. Resolve accessible dependencies instead of leaving findings based on assumptions.
-5. Check CI and external reviews. Separate infrastructure failures from failures caused by the change.
+5. Check CI and external reviews. Inspect `statusCheckRollup` and failed logs rather than claiming CI is unavailable after a limited query. Separate infrastructure failures from failures caused by the change.
 6. Run focused checks and real-runtime or visual validation when the change requires it. Do not claim validation from a command you did not run.
 
 Use `gh` for GitHub data. Prefer structured output and line-aware comments, for example:
@@ -63,7 +63,7 @@ Do not reject a change merely because it differs from personal taste. Explain th
 
 Report findings in severity order. Each finding needs:
 
-- location (`path:line` or a precise range);
+- location (`path:line` or a precise current-diff range; retrieve the diff and verify the line before drafting);
 - concrete problem;
 - why it matters in this repository;
 - requested direction only when supported by evidence;
@@ -77,8 +77,8 @@ Default to read-only. Never post a review, inline comment, request changes, appr
 
 Before posting comments or taking any approved action:
 
-1. Re-check the current head SHA. If it changed, inspect the new commits and refresh affected findings before continuing.
-2. Re-check the full conversation so the comment does not repeat an existing point or ignore an author response.
+1. Re-check the current head SHA. If it changed, inspect the new commits and refresh affected findings before continuing. If an existing review targets the current head and no later commits exist, state that the requested changes remain on the same reviewed code.
+2. Re-check the full conversation so the comment does not repeat an existing point or ignore an author response. Do not draft a new comment that merely repeats an unresolved maintainer request already visible on the same unchanged head unless the user explicitly wants a follow-up reminder.
 3. Prefer one concise inline comment for one actionable issue. Use a summary only for cross-cutting findings.
 4. Draft in the repository's tone: concrete, humane, and proportional. Do not expose private speculation, frustration, or unnecessary internal context.
 5. Show the exact comments and intended action. Wait for explicit approval unless the user already supplied exact final text and explicitly requested that action.
