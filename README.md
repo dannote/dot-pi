@@ -322,6 +322,8 @@ Regular optional skills live under `skills/`. Extra/meta skills live under `skil
 | `applescript`     | macOS-only automation                                                                                        |
 | `bird`            | X/Twitter workflow for my `@dannote/bird-premium` CLI; forked from/credits `steipete/bird`                   |
 | `chat-to-skill`   | Meta workflow for creating new skills                                                                        |
+| `maintainer-reply`| Draft context-aware, concise public replies to issue and PR conversations                                   |
+| `pr-review`       | Context-aware PR review, re-review, external-review triage, and approval-gated comments                     |
 | `session-reflect` | Analyze local Pi session history for workflow patterns; writes cache to `~/.pi/agent/cache/session-reflect/` |
 | `vibe-merge`      | Specialized PR/branch reimplementation workflow                                                              |
 
@@ -366,7 +368,7 @@ ln -s /path/to/dot-pi/rules/typescript.md ~/.pi/agent/rules/
 | `commit-messages.md`        | Follow existing repo commit style                   |
 | `delete-files.md`           | Use `rm -f` to delete files                         |
 | `git-hosting.md`            | Use `gh`/`glab` CLI instead of fetching URLs        |
-| `pull-requests.md`          | PR workflow: study templates, preview before submit |
+| `pull-requests.md`          | Short PR drafting and review safety defaults        |
 | `ripgrep.md`                | Prefer `rg` over `grep`                             |
 | `skills-cli.md`             | Run skill commands from skill directory             |
 | `typescript.md`             | TypeScript naming, type safety, imports, async      |

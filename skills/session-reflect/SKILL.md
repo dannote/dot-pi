@@ -92,15 +92,16 @@ Read [references/query-cookbook.md](references/query-cookbook.md) when selecting
 
 ## Recommended workflow
 
-1. Clarify scope: recent sessions vs all sessions, coding-only vs all pi use, desired output depth.
-2. Build or refresh the DuckDB evidence database with `scripts/session-db.ts build`.
-3. Run a bounded first-pass evidence set: `overview`, `exact-short-repeats`, `tools`, `long-sessions`, and `sample --turns 3 --examples 2`. Add n-grams only when exact repeats do not explain enough.
-4. Pick surprising evidence leads and retrieve compact context windows around representative message keys. For repeated exact turns, use `examples --text ...` for targeted sampling or `sample` for time-spread examples across top repeated turns. Use `--compact --hide-tools` first; rerun without them only when tool output matters.
-5. For friction analysis, treat candidate events as broad **interventions**, not just profanity/escalation. Use `references/intervention-events.md` before generalizing.
-6. Run targeted searches for explicit current-user preferences mentioned in the conversation, then inspect context.
-7. Reason manually from evidence; do not let preset names, query names, repeated phrases, profanity, or all-caps become conclusions.
-8. Present a concise reflection with citations and confidence levels.
-9. Ask whether the user wants tooling changes, pi prompt/default changes, or deeper follow-up analysis.
+1. Clarify scope: recent sessions vs all sessions, coding-only vs all Pi use, and desired output depth.
+2. If the task is reflection over a large history, extract user messages first. Use them to identify candidate workflows and repeated corrections; retrieve assistant/tool context only around selected examples.
+3. Build or refresh the DuckDB evidence database with `scripts/session-db.ts build`.
+4. Run a bounded first-pass evidence set: `overview`, `exact-short-repeats`, `tools`, `long-sessions`, and `sample --turns 3 --examples 2`. Add n-grams only when exact repeats do not explain enough.
+5. Pick surprising evidence leads and retrieve compact context windows around representative message keys. For repeated exact turns, use `examples --text ...` for targeted sampling or `sample` for time-spread examples across top repeated turns. Use `--compact --hide-tools` first; rerun without them only when tool output matters.
+6. For friction analysis, treat candidate events as broad **interventions**, not just profanity/escalation. Use `references/intervention-events.md` before generalizing.
+7. Run targeted searches for explicit current-user preferences mentioned in the conversation, then inspect context.
+8. Reason manually from evidence; do not let preset names, query names, repeated phrases, profanity, or all-caps become conclusions.
+9. Present a concise reflection with citations and confidence levels.
+10. Ask whether the user wants tooling changes, pi prompt/default changes, or deeper follow-up analysis.
 
 ## Output shape
 

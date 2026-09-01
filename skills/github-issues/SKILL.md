@@ -29,6 +29,10 @@ gh pr edit <number> --body-file /tmp/body.md
 gh issue create --body-file /tmp/body.md
 ```
 
+## Review handoff
+
+For PR inspection, use the `pr-review` skill. This skill handles GitHub issue and PR mechanics such as reading templates, using `--body-file` for multiline Markdown, and checking existing comments before closing or posting.
+
 ## View issue
 
 ```bash
@@ -64,9 +68,13 @@ If `gh issue create` prompts for confirmation, review the preview carefully befo
 - Changelog: `([#1](https://github.com/owner/repo/issues/1))`
 - Release notes: `fixes #1` — does NOT auto-close, must close manually
 
+## Public replies
+
+Use the `maintainer-reply` skill before drafting or posting issue and PR replies. Read the conversation first; do not apply a generic thank-you or mention a fix version when it is unknown or irrelevant.
+
 ## Close with comment
 
-Always thank the reporter and mention the fix version:
+When closing with a reply, mention the fix version when known and thank the reporter when appropriate to the conversation:
 
 ```bash
 gh issue close <number> --comment "Fixed in v1.2.3. Thanks for the report!"

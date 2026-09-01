@@ -10,7 +10,7 @@ Vibe-merge means: mine a PR/branch for good ideas, implement the worthwhile part
 ## Workflow
 
 1. **Inspect the source**
-   - Read the PR/branch metadata, diff, commits, discussion, and checks.
+   - Read the PR/branch metadata, diff, commits, discussion, requested changes, external reviews, and checks.
    - Identify the original author name/email from commits when possible:
      - `git show -s --format='%an <%ae>' <commit>`
      - If the email is private/unusable, use the GitHub noreply identity from the PR author when available.
@@ -41,6 +41,8 @@ Vibe-merge means: mine a PR/branch for good ideas, implement the worthwhile part
 5. **Communicate clearly**
    - Say which PR/branch the idea came from.
    - Mention that it was reimplemented rather than merged directly.
+   - Draft any reply after reading the full conversation; do not repeat context the contributor already knows or expose private reasoning.
+   - Show the exact reply and wait for approval before posting.
    - When closing or commenting on the original PR, thank the contributor and explain briefly that selected ideas landed with co-author credit.
 
 ## Commit shape
