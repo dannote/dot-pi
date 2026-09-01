@@ -16,6 +16,7 @@ Before drafting, establish:
 - purpose: answer, clarify, thank, apologize, request information, request changes, close, or explain a decision;
 - what has already been said;
 - what the recipient already knows;
+- the state and time slice the reply must reflect, especially when testing or reconstructing an earlier point in a conversation;
 - whether this is a draft or an approved post.
 
 Keep these separate:
@@ -36,16 +37,16 @@ Write in the maintainer's natural voice:
 - proportionate to the issue and contributor;
 - direct without sounding automated or corporate.
 
-Avoid generic filler, obvious restatements, excessive headings, long technical explanations, forced gratitude, unexplained jargon, and LLM-shaped phrases such as “I’ve provided detailed feedback below” when the context already makes that clear. Do not mention bots, internal agents, or project politics unless the user explicitly wants that included.
+Avoid generic filler, obvious restatements, excessive headings, long technical explanations, forced gratitude, unexplained jargon, and LLM-shaped phrases such as “I’ve provided detailed feedback below” when the context already makes that clear. Avoid intensifiers and stock support language such as “sincerely,” “we appreciate your effort,” and “thanks for your understanding” unless they fit the maintainer's established voice and this specific exchange. Do not mention bots, internal agents, or project politics unless the user explicitly wants that included.
 
 Appreciate useful contributions sincerely. Do not treat a good-faith contributor like a low-effort or automated submission without clear evidence. If apologizing, name the concrete mistake and the correction; do not over-explain.
 
 ## Workflow
 
-1. Read the relevant conversation and inspect linked context when the reply depends on it.
+1. Read the relevant conversation and inspect linked context when the reply depends on it. If drafting for an earlier moment, use only facts known at that point and do not copy or rely on later replies.
 2. Summarize privately in one sentence what the reply needs to accomplish.
 3. Draft the shortest complete reply that accomplishes that purpose.
-4. Check every sentence: already known, private, generic, or unnecessary sentences should be removed.
+4. Check every sentence: already known, private, generic, unsupported, or unnecessary sentences should be removed. Never promise a future action or say it is happening “now” unless the user approved it and the current workflow will perform it.
 5. Show the exact draft and intended destination unless the user already supplied exact final text and explicitly asked to post it.
 6. Wait for explicit approval when the text or action is not already explicit. A request to draft or review is not permission to post.
 7. Before posting, re-check the conversation for newer replies. Post exactly the approved text and verify the result.
