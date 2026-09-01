@@ -280,7 +280,9 @@ Run `/oracle` without args for the native intent picker and cost/context confirm
 | `agent-browser`           | Browser automation via agent-browser CLI. This wrapper loads current docs from `agent-browser skills get core` instead of vendoring them. | `npm install -g agent-browser && agent-browser install` |
 | `github-issues`           | Work with GitHub Issues via `gh`                                                                                                          | `gh auth login`                                         |
 | `keyboard-layout-decoder` | Decode Russian/English wrong-keyboard-layout text                                                                                         | None                                                    |
+| `maintainer-reply`        | Draft concise, context-aware public replies and require appropriate approval before posting                                               | `gh auth login` for posting                             |
 | `package-release`         | Prepare, publish, repair, and verify package releases from canonical user-facing changelogs                                               | Registry and GitHub credentials as required             |
+| `pr-review`               | Review and re-review PRs with history, codebase fit, checks, external-review triage, and mutation gates                                   | `gh auth login`                                         |
 | `skill-discovery`         | Discover agent skills on GitHub                                                                                                           | None                                                    |
 
 ## Optional resources
@@ -322,8 +324,6 @@ Regular optional skills live under `skills/`. Extra/meta skills live under `skil
 | `applescript`     | macOS-only automation                                                                                        |
 | `bird`            | X/Twitter workflow for my `@dannote/bird-premium` CLI; forked from/credits `steipete/bird`                   |
 | `chat-to-skill`   | Meta workflow for creating new skills                                                                        |
-| `maintainer-reply`| Draft context-aware, concise public replies to issue and PR conversations                                   |
-| `pr-review`       | Context-aware PR review, re-review, external-review triage, and approval-gated comments                     |
 | `session-reflect` | Analyze local Pi session history for workflow patterns; writes cache to `~/.pi/agent/cache/session-reflect/` |
 | `vibe-merge`      | Specialized PR/branch reimplementation workflow                                                              |
 
@@ -361,17 +361,17 @@ mkdir -p ~/.pi/agent/rules
 ln -s /path/to/dot-pi/rules/typescript.md ~/.pi/agent/rules/
 ```
 
-| Rule                        | Description                                         |
-| --------------------------- | --------------------------------------------------- |
-| `backward-compatibility.md` | Avoid unnecessary compatibility shims               |
-| `comments.md`               | Avoid redundant comments                            |
-| `commit-messages.md`        | Follow existing repo commit style                   |
-| `delete-files.md`           | Use `rm -f` to delete files                         |
-| `git-hosting.md`            | Use `gh`/`glab` CLI instead of fetching URLs        |
-| `pull-requests.md`          | Short PR drafting and review safety defaults        |
-| `ripgrep.md`                | Prefer `rg` over `grep`                             |
-| `skills-cli.md`             | Run skill commands from skill directory             |
-| `typescript.md`             | TypeScript naming, type safety, imports, async      |
+| Rule                        | Description                                    |
+| --------------------------- | ---------------------------------------------- |
+| `backward-compatibility.md` | Avoid unnecessary compatibility shims          |
+| `comments.md`               | Avoid redundant comments                       |
+| `commit-messages.md`        | Follow existing repo commit style              |
+| `delete-files.md`           | Use `rm -f` to delete files                    |
+| `git-hosting.md`            | Use `gh`/`glab` CLI instead of fetching URLs   |
+| `pull-requests.md`          | Short PR drafting and review safety defaults   |
+| `ripgrep.md`                | Prefer `rg` over `grep`                        |
+| `skills-cli.md`             | Run skill commands from skill directory        |
+| `typescript.md`             | TypeScript naming, type safety, imports, async |
 
 ## Development
 

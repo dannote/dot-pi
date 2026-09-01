@@ -9,17 +9,19 @@ Review before mutating. Read the repository's `AGENTS.md`, `CONTRIBUTING.md`, PR
 
 ## Choose the workflow
 
-| Context | Role | Output |
-|---|---|---|
-| First review | Reviewer | Evidence-based findings and one recommendation |
-| Re-review after feedback | Follow-up reviewer | Status of each requested change plus regression findings |
-| CodeRabbit, Copilot, CI, or contributor review | Maintainer | Independently verified classifications |
-| Preparing comments | Maintainer reviewer | Exact concise inline-comment draft |
-| Approved fix or merge | Maintainer/implementer | Scoped action and validation result |
+| Context                                    | Role                   | Output                                                                       |
+| ------------------------------------------ | ---------------------- | ---------------------------------------------------------------------------- |
+| First review                               | Reviewer               | Evidence-based findings and one recommendation                               |
+| Re-review after feedback                   | Follow-up reviewer     | Status of each requested change plus regression findings                     |
+| CodeRabbit, Copilot, or contributor review | Maintainer             | Independently verified classifications                                       |
+| CI and checks                              | Reviewer               | Attributed pass, PR failure, infrastructure failure, flake, skip, or unknown |
+| Preparing comments                         | Maintainer reviewer    | Exact concise inline-comment draft                                           |
+| Approved fix or merge                      | Maintainer/implementer | Scoped action and validation result                                          |
 
 - **First review:** inspect the final diff, history, discussion, checks, and relevant source/tests.
-- **Re-review:** start from the previous review and track every requested change as addressed, partial, unresolved, or obsolete; then inspect the new diff for regressions.
-- **External review:** verify each CodeRabbit, Copilot, CI, or contributor finding independently; classify it as valid, invalid, stale, duplicate, or low-value.
+- **Re-review:** build the requested-change list from maintainer reviews, inline threads, author responses, and later commits. Mark each item as maintainer-requested, external suggestion, or newly discovered, then classify it as addressed, partial, unresolved, or obsolete and inspect for regressions.
+- **External review:** verify each CodeRabbit, Copilot, or contributor finding independently; classify it as valid, invalid, stale, duplicate, or low-value.
+- **CI and checks:** attribute each relevant result as passing, failing because of the PR, infrastructure failure, flaky, skipped/not applicable, or unverified.
 - **Draft comments:** map valid findings to the smallest useful line range, prefer inline comments, remove duplicates, and show the exact draft.
 - **Fix or merge:** only act after the user explicitly chooses that action. Use `vibe-merge` when reimplementing selected ideas instead of merging a PR wholesale.
 
@@ -29,7 +31,7 @@ Do not conflate these workflows. A request to review is not permission to commen
 
 1. Establish the base branch, worktree state, PR number, author, scope, and current head SHA.
 2. Read repository guidance and the PR template. Check whether guidance files differ between the base and PR branch.
-3. Read the PR title, body, commits, timeline, reviews, inline comments, and issue conversation. Look for earlier requests, author replies, resolved threads, and changed scope.
+3. Read the PR title, body, commits, timeline, reviews, inline comments, and issue conversation. Look for maintainer requests, external suggestions, author replies, resolved threads, and changed scope.
 4. Inspect the complete diff against the correct base. Read surrounding source and analogous existing implementations.
 5. Check CI and external reviews. Separate infrastructure failures from failures caused by the change.
 6. Run focused checks and real-runtime or visual validation when the change requires it. Do not claim validation from a command you did not run.
@@ -71,13 +73,14 @@ Keep the report concise. State what was checked and what was not. If there are n
 
 Default to read-only. Never post a review, inline comment, request changes, approve, edit a PR, push, or merge while merely reviewing.
 
-Before posting comments:
+Before posting comments or taking any approved action:
 
-1. Re-check the full conversation so the comment does not repeat an existing point or ignore an author response.
-2. Prefer one concise inline comment for one actionable issue. Use a summary only for cross-cutting findings.
-3. Draft in the repository's tone: concrete, humane, and proportional. Do not expose private speculation, frustration, or unnecessary internal context.
-4. Show the exact comments and intended action. Wait for explicit approval.
-5. After approval, post only the approved comments and verify what was posted. Do not duplicate existing comments.
+1. Re-check the current head SHA. If it changed, inspect the new commits and refresh affected findings before continuing.
+2. Re-check the full conversation so the comment does not repeat an existing point or ignore an author response.
+3. Prefer one concise inline comment for one actionable issue. Use a summary only for cross-cutting findings.
+4. Draft in the repository's tone: concrete, humane, and proportional. Do not expose private speculation, frustration, or unnecessary internal context.
+5. Show the exact comments and intended action. Wait for explicit approval unless the user already supplied exact final text and explicitly requested that action.
+6. After approval, post only the approved comments and verify what was posted. Do not duplicate existing comments.
 
 Treat short follow-ups such as “go ahead” as authorization for the immediately discussed action only. If the action is unclear, summarize the pending choice instead of guessing.
 

@@ -89,7 +89,9 @@
       "skills/agent-browser",
       "skills/github-issues",
       "skills/keyboard-layout-decoder",
+      "skills/maintainer-reply",
       "skills/package-release",
+      "skills/pr-review",
       "skills/skill-discovery"
     ],
     "prompts": [

@@ -46,9 +46,9 @@ Appreciate useful contributions sincerely. Do not treat a good-faith contributor
 2. Summarize privately in one sentence what the reply needs to accomplish.
 3. Draft the shortest complete reply that accomplishes that purpose.
 4. Check every sentence: already known, private, generic, or unnecessary sentences should be removed.
-5. Show the exact draft and intended destination.
-6. Wait for explicit approval before posting. A request to draft or review is not permission to post.
-7. After approval, post exactly the approved text and verify the result.
+5. Show the exact draft and intended destination unless the user already supplied exact final text and explicitly asked to post it.
+6. Wait for explicit approval when the text or action is not already explicit. A request to draft or review is not permission to post.
+7. Before posting, re-check the conversation for newer replies. Post exactly the approved text and verify the result.
 
 If the user says “go ahead,” use the immediately preceding draft and action as the scope. Do not infer permission for unrelated comments, edits, labels, closing, or merging.
 
