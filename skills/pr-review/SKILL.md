@@ -23,7 +23,7 @@ Review before mutating. Read the repository's `AGENTS.md`, `CONTRIBUTING.md`, PR
 - **Re-review:** build the requested-change list from maintainer reviews, inline threads, author responses, and later commits. Mark each item as maintainer-requested, external suggestion, or newly discovered, then classify it as addressed, partial, unresolved, or obsolete and inspect for regressions.
 - **Merged or closed PR:** review retrospectively. Do not recommend merging, approving, or requesting changes; identify only lessons or a separate follow-up warranted by current code.
 - **External review:** verify each CodeRabbit, Copilot, or contributor finding against the current head, current PR body, and current conversation; classify it as valid, invalid, stale, duplicate, or low-value.
-- **CI and checks:** attribute each relevant result as passing, failing because of the PR, infrastructure failure, flaky, skipped/not applicable, or unverified. Report the actual checks; do not inflate the count with service statuses or infer checks that are not present.
+- **CI and checks:** inspect failing logs, not only check summaries. Attribute each relevant result as passing, failing because of the PR, infrastructure failure, flaky, cancelled/blocked, skipped/not applicable, or unverified. Report the actual checks; do not inflate the count with service statuses or infer checks that are not present.
 - **Draft comments:** map valid findings to the smallest useful line range, prefer inline comments, remove duplicates, and show the exact draft.
 - **Fix or merge:** only act after the user explicitly chooses that action. Use `vibe-merge` when reimplementing selected ideas instead of merging a PR wholesale.
 
