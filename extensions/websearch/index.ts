@@ -21,9 +21,11 @@ import {
   meta as renderMeta,
   primary,
   renderEntryList,
+  renderEmpty,
   renderErrorOrPartial,
-  renderLines,
+  renderMarkdownPreview,
   renderMuted,
+  renderTextLinesPreview,
   renderToolCall,
   title,
   toolError,
@@ -72,7 +74,8 @@ Usage notes:
 - Control content freshness with maxAgeHours (0=always fresh, 24=accept 24h cache, -1=cache only, omit=default)
 - Prefer highlights for agent workflows; use full text only when needed and cap contextMaxCharacters
 - Tool output is truncated to ${DEFAULT_MAX_LINES} lines or ${formatSize(DEFAULT_MAX_BYTES)}
-- Use systemPrompt and outputSchema only when you need synthesized/structured output; they can increase latency and cost`
+- For ordinary search and research, omit outputSchema; normal results and highlights are easier to use than structured synthesis.
+- Use outputSchema only when the user explicitly requests machine-readable fields or a specific JSON shape.`
 
 const WebSearchParams = Type.Object({
   query: Type.String({ description: 'Web search query' }),
@@ -253,7 +256,10 @@ const WebSearchParams = Type.Object({
         required: Type.Optional(Type.Array(Type.String())),
         additionalProperties: Type.Optional(Type.Boolean())
       },
-      { description: 'JSON schema for synthesized output; root type must be text or object' }
+      {
+        description:
+          'Optional structured-output schema. Omit for ordinary web search; use only when the user explicitly requests machine-readable fields or a specific JSON shape.'
+      }
     )
   ),
   userLocation: Type.Optional(
@@ -264,6 +270,113 @@ const WebSearchParams = Type.Object({
 })
 
 const PREVIEW_TEXT_LENGTH = 220
+type SynthesizedOutput =
+  | { kind: 'text'; text: string }
+  | { kind: 'entries'; entries: WebSearchResult[] }
+  | { kind: 'fields'; fields: Array<{ label: string; value: string }> }
+
+function fieldLabel(key: string): string {
+  return key
+    .replace(/([A-Z])/gu, ' $1')
+    .replace(/[_-]/gu, ' ')
+    .trim()
+}
+
+function parseSynthesizedOutput(output: string): SynthesizedOutput {
+  try {
+    const value: unknown = JSON.parse(output)
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return { kind: 'text', text: String(value ?? '') }
+    }
+
+    const record = value as Record<string, unknown>
+    const array = Object.values(record).find(Array.isArray)
+    if (array?.every((item) => item && typeof item === 'object' && !Array.isArray(item))) {
+      const entries = array.map((item, index) => {
+        const row = item as Record<string, unknown>
+        const titleValue = row.title ?? row.name ?? row.label
+        const urlValue = row.url ?? row.link
+        const summaryValue = row.summary ?? row.description ?? row.keyPoints ?? row.key_points
+        const summary =
+          typeof summaryValue === 'string'
+            ? summaryValue
+            : Array.isArray(summaryValue)
+              ? summaryValue
+                  .filter((point): point is string => typeof point === 'string')
+                  .join(' · ')
+              : undefined
+        return {
+          title: typeof titleValue === 'string' ? titleValue : `Result ${index + 1}`,
+          url: typeof urlValue === 'string' ? urlValue : '',
+          summary: summary || undefined
+        }
+      })
+      return { kind: 'entries', entries }
+    }
+
+    const fields = Object.entries(record)
+      .filter(([, entry]) => ['string', 'number', 'boolean'].includes(typeof entry))
+      .map(([key, entry]) => ({ label: fieldLabel(key), value: String(entry) }))
+    return fields.length > 0 ? { kind: 'fields', fields } : { kind: 'text', text: output }
+  } catch {
+    return { kind: 'text', text: output }
+  }
+}
+
+function renderSearchEntries(
+  results: WebSearchResult[],
+  expanded: boolean,
+  theme: Parameters<typeof title>[1]
+) {
+  let textHidden = false
+  return renderEntryList(results, theme, {
+    expanded,
+    compactLimit: 2,
+    renderEntry: (r) => {
+      let metadata = r.url ? renderMeta(theme.underline(r.url), theme) : undefined
+      if (r.author)
+        metadata = (metadata ?? '') + renderMeta(`${metadata ? ' · ' : ''}${r.author}`, theme)
+      if (r.publishedDate)
+        metadata =
+          (metadata ?? '') +
+          renderMeta(`${metadata ? ' · ' : ''}${r.publishedDate.split('T')[0]}`, theme)
+      const body: string[] = []
+      const previewText = r.summary || r.highlights?.[0]
+      if (expanded) {
+        if (r.summary) body.push(primary(r.summary, theme))
+        if (r.text) body.push(primary(r.text, theme))
+      } else if (previewText) {
+        textHidden = previewText.length > PREVIEW_TEXT_LENGTH || Boolean(r.text)
+        body.push(primary(truncateText(previewText, PREVIEW_TEXT_LENGTH), theme))
+      } else if (r.text) textHidden = true
+      return { header: title(r.title, theme), metadata, body }
+    },
+    hiddenLines: (hiddenResults) => {
+      if (hiddenResults > 0) return [renderMeta(`… ${hiddenResults} more results`, theme)]
+      return textHidden ? [renderMeta('… more text', theme)] : []
+    }
+  })
+}
+
+function renderSynthesizedOutput(
+  output: string,
+  expanded: boolean,
+  theme: Parameters<typeof title>[1]
+) {
+  const parsed = parseSynthesizedOutput(output)
+  if (parsed.kind === 'entries') return renderSearchEntries(parsed.entries, expanded, theme)
+  if (parsed.kind === 'text') {
+    return renderMarkdownPreview(parsed.text, theme, { expanded, compactLines: 4, expandedY: 0 })
+  }
+  return renderTextLinesPreview(
+    parsed.fields.map(
+      ({ label, value }) => `${renderMeta(`${label}: `, theme)}${primary(value, theme)}`
+    ),
+    theme,
+    { expanded, compactLimit: 6, hiddenUnit: 'more fields' }
+  )
+}
+
 function formatResultsAsText(results: WebSearchResult[], output?: string): string {
   const resultText = results
     .map((r) => {
@@ -360,40 +473,12 @@ export default function (pi: ExtensionAPI) {
       const results = details?.results ?? []
 
       if (results.length === 0) {
-        return details?.output
-          ? renderLines([primary(details.output, theme)])
-          : renderMuted('No results found.', theme)
+        if (!details?.output) return renderMuted('No results found.', theme)
+        if (isPartial) return renderEmpty()
+        return renderSynthesizedOutput(details.output, expanded, theme)
       }
 
-      let textHidden = false
-
-      return renderEntryList(results, theme, {
-        expanded,
-        compactLimit: 1,
-        renderEntry: (r) => {
-          let metadata = renderMeta(theme.underline(r.url), theme)
-          if (r.author) metadata += renderMeta(` · ${r.author}`, theme)
-          if (r.publishedDate) metadata += renderMeta(` · ${r.publishedDate.split('T')[0]}`, theme)
-
-          const body: string[] = []
-          const previewText = r.summary || r.highlights?.[0]
-          if (expanded) {
-            if (r.summary) body.push(renderMeta('Summary: ', theme) + primary(r.summary, theme))
-            if (r.text) body.push(primary(r.text, theme))
-          } else if (previewText) {
-            textHidden = previewText.length > PREVIEW_TEXT_LENGTH || Boolean(r.text)
-            body.push(primary(truncateText(previewText, PREVIEW_TEXT_LENGTH), theme))
-          } else if (r.text) {
-            textHidden = true
-          }
-
-          return { header: title(r.title, theme), metadata, body }
-        },
-        hiddenLines: (hiddenResults) => {
-          if (hiddenResults > 0) return [renderMeta(`… ${hiddenResults} more results`, theme)]
-          return textHidden ? [renderMeta('… more text', theme)] : []
-        }
-      })
+      return renderSearchEntries(results, expanded, theme)
     }
   })
 }

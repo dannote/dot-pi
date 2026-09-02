@@ -36,8 +36,7 @@ describe('buildExaSearchRequest', () => {
         includeDomains: [],
         excludeText: [''],
         includeSections: [],
-        systemPrompt: '',
-        outputSchema: { type: 'object' },
+        outputSchema: { type: 'object', properties: {} },
         summary: false,
         includeHtmlTags: false,
         maxAgeHours: 0
@@ -88,6 +87,23 @@ describe('buildExaSearchRequest', () => {
       excludeDomains: ['example.com'],
       startPublishedDate: '2026-01-01T00:00:00.000Z'
     })
+  })
+
+  test('rejects unsupported structured-output schemas before calling Exa', () => {
+    expect(() => buildExaSearchRequest({ query: 'x', outputSchema: { type: 'object' } })).toThrow(
+      'require properties'
+    )
+    expect(() =>
+      buildExaSearchRequest({
+        query: 'x',
+        outputSchema: {
+          type: 'object',
+          properties: Object.fromEntries(
+            Array.from({ length: 11 }, (_, index) => [`field${index}`, { type: 'string' }])
+          )
+        }
+      })
+    ).toThrow('more than 10 properties')
   })
 
   test('drops filters unsupported by people search', () => {

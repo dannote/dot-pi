@@ -72,11 +72,43 @@ function formatSynthesis(output: unknown): string | undefined {
   return JSON.stringify(output, null, 2)
 }
 
+function validateSchemaNode(
+  value: unknown,
+  objectDepth: number,
+  state: { properties: number }
+): void {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('outputSchema nodes must be JSON schema objects')
+  }
+  const node = value as Record<string, unknown>
+  const type = node.type
+  if (!['object', 'array', 'string', 'number', 'integer', 'boolean'].includes(String(type))) {
+    throw new Error(`outputSchema contains unsupported type: ${String(type)}`)
+  }
+  if (type === 'object') {
+    if (objectDepth > 2) throw new Error('outputSchema object nesting depth must not exceed 2')
+    if (!node.properties || typeof node.properties !== 'object' || Array.isArray(node.properties)) {
+      throw new Error('outputSchema object nodes require properties')
+    }
+    const properties = Object.entries(node.properties as Record<string, unknown>)
+    state.properties += properties.length
+    if (state.properties > 10)
+      throw new Error('outputSchema must not contain more than 10 properties')
+    for (const [, property] of properties) validateSchemaNode(property, objectDepth + 1, state)
+  }
+  if (type === 'array') {
+    if (!node.items) throw new Error('outputSchema array nodes require items')
+    validateSchemaNode(node.items, objectDepth, state)
+  }
+}
+
 function validateOutputSchema(value: unknown): ExaOutputSchema {
   if (!Value.Check(ExaOutputSchema, value)) {
     throw new Error('outputSchema must be an object with type "text" or "object"')
   }
-  return value as ExaOutputSchema
+  const schema = value as ExaOutputSchema
+  if (schema.type === 'object') validateSchemaNode(schema, 0, { properties: 0 })
+  return schema
 }
 
 export function buildExaSearchRequest(

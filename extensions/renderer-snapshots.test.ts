@@ -49,6 +49,47 @@ describe('renderer smoke snapshots', () => {
     expect(rendered).toContain('https://example.com/pi')
   })
 
+  test('websearch structured result-like output reuses entry rendering', () => {
+    const rendered = renderResult(
+      websearch,
+      'websearch',
+      {
+        query: 'captcha docs',
+        results: [],
+        output: JSON.stringify({
+          results: [
+            {
+              title: 'Invisible CAPTCHA',
+              url: 'https://example.com/captcha',
+              keyPoints: ['Official integration documentation.', 'Uses execute() for validation.']
+            }
+          ]
+        })
+      },
+      'structured'
+    )
+
+    expect(rendered).toContain('Invisible CAPTCHA')
+    expect(rendered).toContain('https://example.com/captcha')
+    expect(rendered).toContain('Official integration documentation.')
+    expect(rendered).toContain('Uses execute() for validation.')
+    expect(rendered).not.toContain('{')
+    expect(rendered).not.toContain('Structured synthesis available')
+  })
+
+  test('websearch prose synthesis reuses markdown preview', () => {
+    const rendered = renderResult(
+      websearch,
+      'websearch',
+      {
+        query: 'answer',
+        results: [],
+        output: 'The official directory lists each regional office.'
+      },
+      'synthesis'
+    )
+    expect(rendered).toContain('The official directory')
+  })
   test('context7 docs compact result exposes library metadata', () => {
     const rendered = renderResult(
       context7,
