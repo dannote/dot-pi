@@ -230,6 +230,21 @@ describe('computer SDK adapter', () => {
     ])
   })
 
+  test('routes semantic clicks through Cua element tokens', async () => {
+    const h = harness()
+    const f = fakeDriver()
+    registerComputerTools(h.pi, f.factory)
+    await h.tools
+      .find((tool) => tool.name === 'computer_click')!
+      .execute(
+        '1',
+        { elementToken: 's1:4', target: { kind: 'window', pid: 42, windowId: 7 } },
+        undefined,
+        undefined,
+        {} as never
+      )
+    expect(f.calls).toContainEqual(['click', { pid: 42, window_id: 7, element_token: 's1:4' }])
+  })
   test('shuts down lazily-created driver', async () => {
     const h = harness()
     const f = fakeDriver()

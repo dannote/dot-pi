@@ -23,8 +23,9 @@ export const schemas = {
   }),
   observe: Type.Object({ target, session: Type.Optional(Type.String()) }),
   click: Type.Object({
-    x: Type.Number(),
-    y: Type.Number(),
+    elementToken: Type.Optional(Type.String()),
+    x: Type.Optional(Type.Number()),
+    y: Type.Optional(Type.Number()),
     count: Type.Optional(Type.Integer({ minimum: 1, maximum: 3 })),
     target,
     session: Type.Optional(Type.String())

@@ -35,6 +35,31 @@ function windowTarget(params: ComputerParams) {
   return { pid: value.pid, window_id: value.windowId, session: session(params) }
 }
 
+function validateClickParams(params: ComputerParams): void {
+  const hasToken = typeof params.elementToken === 'string' && params.elementToken.length > 0
+  const hasX = typeof params.x === 'number'
+  const hasY = typeof params.y === 'number'
+  if (hasToken === (hasX || hasY)) {
+    throw new Error('computer click requires either elementToken or x and y')
+  }
+  if (!hasToken && (!hasX || !hasY)) {
+    throw new Error('computer click coordinates require both x and y')
+  }
+  const target = params.target as { kind?: string } | undefined
+  if (hasToken && target?.kind !== 'window') {
+    throw new Error('computer click elementToken requires a window target')
+  }
+}
+function semanticClickArgs(params: ComputerParams) {
+  const value = params.target as { pid: number; windowId: number }
+  return {
+    pid: value.pid,
+    window_id: value.windowId,
+    element_token: params.elementToken,
+    count: params.count,
+    session: session(params)
+  }
+}
 function observeTarget(params: ComputerParams): 'desktop' | 'window' {
   const value = params.target as { kind?: string } | undefined
   return value?.kind === 'window' ? 'window' : 'desktop'
@@ -81,7 +106,12 @@ const definitions: RegisteredComputerTool[] = [
       'Click coordinates from the latest observation. Prefer an exact window target and observe again to verify the effect.',
     parameters: schemas.click,
     operation: 'click',
-    execute: (driver, p, signal) => driver.click(clickInput(p), { signal: signal! })
+    execute: (driver, p, signal) => {
+      validateClickParams(p)
+      return typeof p.elementToken === 'string'
+        ? driver.callTool('click', JSON.stringify(semanticClickArgs(p)), { signal: signal! })
+        : driver.click(clickInput(p), { signal: signal! })
+    }
   },
   {
     name: 'computer_type',

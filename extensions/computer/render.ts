@@ -92,6 +92,8 @@ function quoteText(value: string): string {
 export function renderCall(label: string, params: unknown, theme: Theme) {
   const args = (params ?? {}) as Record<string, unknown>
   const segments: Array<{ text?: string; color?: 'accent' | 'muted' | 'dim' | 'success' }> = []
+  if (typeof args.elementToken === 'string')
+    segments.push({ text: args.elementToken, color: 'accent' })
   if (typeof args.text === 'string') segments.push({ text: quoteText(args.text) })
   if (typeof args.x === 'number' && typeof args.y === 'number') {
     segments.push({ text: `${args.x},${args.y}`, color: 'accent' })
