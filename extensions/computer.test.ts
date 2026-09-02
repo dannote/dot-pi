@@ -98,6 +98,18 @@ function fakeDriver() {
 }
 
 describe('computer SDK adapter', () => {
+  test('adds routing guidance without adding browser tools', () => {
+    const h = harness()
+    computer(h.pi)
+    expect(h.tools.some((tool) => tool.name.includes('browser'))).toBe(false)
+    const handler = h.events.get('before_agent_start') as unknown as (event: {
+      systemPrompt: string
+    }) => { systemPrompt: string }
+    const guided = handler({ systemPrompt: 'base' }).systemPrompt
+    expect(guided).toContain('Use computer tools for native desktop applications')
+    expect(guided).toContain('Use agent-browser for webpage DOM')
+    expect(guided).toContain('Do not guess process ids')
+  })
   test('renders Cua app records semantically without private implementation fields', () => {
     const h = harness()
     computer(h.pi)

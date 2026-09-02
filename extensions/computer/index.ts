@@ -14,6 +14,12 @@ import {
 } from './driver'
 import { schemas, type ComputerParams } from './schemas'
 
+const COMPUTER_GUIDANCE = [
+  'Use computer tools for native desktop applications, system dialogs, file pickers, and browser chrome. Use agent-browser for webpage DOM, navigation, tabs, network, console, cookies, storage, downloads, and web screenshots.',
+  'Prefer direct APIs or curl when a reliable non-UI interface exists.',
+  'For desktop actions: list apps/windows, observe the exact target, act with coordinates from that observation, then observe again when verification matters.',
+  'Do not guess process ids, window ids, or coordinates.'
+] as const
 interface RegisteredComputerTool {
   name: string
   label: string
@@ -139,5 +145,8 @@ export function registerComputerTools(
 
 export default function computer(pi: ExtensionAPI) {
   const shutdown = registerComputerTools(pi)
+  pi.on('before_agent_start', (event) => ({
+    systemPrompt: `${event.systemPrompt}\n\n${COMPUTER_GUIDANCE.join('\n')}`
+  }))
   pi.on('session_shutdown', shutdown)
 }
