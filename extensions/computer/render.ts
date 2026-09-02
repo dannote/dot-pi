@@ -21,6 +21,9 @@ export interface ComputerDetails {
   degraded?: boolean
   errorCode?: string
   structuredJson?: string
+  action?: unknown
+  verification?: unknown
+  rawJson?: string
   items?: Array<Record<string, unknown>>
 }
 
@@ -54,6 +57,9 @@ export function result(operation: string, value: ComputerResult) {
       degraded: value.degraded,
       errorCode: value.errorCode,
       structuredJson: value.structuredJson,
+      action: value.action,
+      verification: value.verification,
+      rawJson: value.rawJson,
       items
     } satisfies ComputerDetails,
     ...(value.isError ? { isError: true } : {})

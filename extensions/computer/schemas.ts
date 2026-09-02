@@ -21,10 +21,7 @@ export const schemas = {
     onScreenOnly: Type.Optional(Type.Boolean()),
     pid: Type.Optional(Type.Integer({ minimum: 1 }))
   }),
-  observe: Type.Object({
-    session: Type.Optional(Type.String()),
-    screenshotOutFile: Type.Optional(Type.String())
-  }),
+  observe: Type.Object({ target, session: Type.Optional(Type.String()) }),
   click: Type.Object({
     x: Type.Number(),
     y: Type.Number(),

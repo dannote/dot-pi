@@ -102,5 +102,13 @@ export function scrollInput(params: ComputerParams): ScrollInput {
 
 export type ComputerResult = Pick<
   ToolResult,
-  'text' | 'images' | 'isError' | 'degraded' | 'errorCode' | 'structuredJson'
+  | 'text'
+  | 'images'
+  | 'isError'
+  | 'degraded'
+  | 'errorCode'
+  | 'structuredJson'
+  | 'action'
+  | 'verification'
+  | 'rawJson'
 >

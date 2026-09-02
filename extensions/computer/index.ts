@@ -59,21 +59,20 @@ const definitions: RegisteredComputerTool[] = [
   {
     name: 'computer_observe',
     label: 'computer observe',
-    description: 'Observe the current desktop.',
+    description:
+      'Observe the desktop or one exact window. Use computer windows first; do not guess window identity or coordinates.',
     parameters: schemas.observe,
     operation: 'observe',
     execute: (driver, p, signal) =>
       observeTarget(p) === 'window'
         ? driver.callTool('get_window_state', JSON.stringify(windowTarget(p)), { signal: signal! })
-        : driver.getDesktopState(
-            { session: session(p), screenshotOutFile: p.screenshotOutFile as string | undefined },
-            { signal: signal! }
-          )
+        : driver.getDesktopState({ session: session(p) }, { signal: signal! })
   },
   {
     name: 'computer_click',
     label: 'computer click',
-    description: 'Click at desktop coordinates.',
+    description:
+      'Click coordinates from the latest observation. Prefer an exact window target and observe again to verify the effect.',
     parameters: schemas.click,
     operation: 'click',
     execute: (driver, p, signal) => driver.click(clickInput(p), { signal: signal! })
@@ -81,7 +80,8 @@ const definitions: RegisteredComputerTool[] = [
   {
     name: 'computer_type',
     label: 'computer type',
-    description: 'Type text into the focused application.',
+    description:
+      'Type into the focused control of an exact observed target, then observe again to verify the effect.',
     parameters: schemas.type,
     operation: 'type',
     execute: (driver, p, signal) => driver.typeText(typeInput(p), { signal: signal! })
@@ -89,7 +89,8 @@ const definitions: RegisteredComputerTool[] = [
   {
     name: 'computer_key',
     label: 'computer key',
-    description: 'Press a key with optional modifiers.',
+    description:
+      'Press a key on an exact observed target, then observe again when the effect matters.',
     parameters: schemas.key,
     operation: 'key',
     execute: (driver, p, signal) => driver.pressKey(keyInput(p), { signal: signal! })
@@ -97,7 +98,7 @@ const definitions: RegisteredComputerTool[] = [
   {
     name: 'computer_scroll',
     label: 'computer scroll',
-    description: 'Scroll at desktop coordinates.',
+    description: 'Scroll coordinates from the latest observation. Prefer an exact window target.',
     parameters: schemas.scroll,
     operation: 'scroll',
     execute: (driver, p, signal) => driver.scroll(scrollInput(p), { signal: signal! })

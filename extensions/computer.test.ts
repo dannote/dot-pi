@@ -181,7 +181,7 @@ describe('computer SDK adapter', () => {
       {} as never
     )
     expect(f.calls).toEqual([
-      ['desktop', { session: undefined, screenshotOutFile: undefined }],
+      ['desktop', { session: undefined }],
       ['get_window_state', { pid: 42, window_id: 7 }]
     ])
   })
@@ -207,7 +207,7 @@ describe('computer SDK adapter', () => {
       { type: 'image', data: 'abc', mimeType: 'image/png' }
     ])
     expect(f.calls).toEqual([
-      ['desktop', { session: 's', screenshotOutFile: undefined }],
+      ['desktop', { session: 's' }],
       ['click', { x: 3, y: 4, count: 2, target: undefined, session: 's' }],
       ['scroll', expect.objectContaining({ amount: 4n, target: undefined, session: 's' })]
     ])
