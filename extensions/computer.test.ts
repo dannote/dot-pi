@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'vitest'
 import { Value } from 'typebox/value'
 import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
-import type { CuaDriverLike, ToolResult } from '@trycua/cua-driver'
+import {
+  ActionEffect,
+  VerificationStatus,
+  type CuaDriverLike,
+  type ToolResult
+} from '@trycua/cua-driver'
 import { renderComponentText, testTheme } from './shared/test-utils'
 import computer, { registerComputerTools, type ComputerDriverFactory } from './computer/index'
 import { sdkTarget } from './computer/driver'
@@ -271,6 +276,29 @@ describe('computer SDK adapter', () => {
     })
   })
 
+  test('renders action and verification status from structured Cua metadata', () => {
+    const h = harness()
+    computer(h.pi)
+    const tool = h.tools.find((candidate) => candidate.name === 'computer_click')!
+    const rendered = renderComponentText(
+      tool.renderResult?.(
+        {
+          content: [{ type: 'text', text: 'Clicked Increment' }],
+          details: {
+            operation: 'click',
+            action: { effect: ActionEffect.Confirmed },
+            verification: { status: VerificationStatus.Satisfied },
+            degraded: false
+          }
+        },
+        { expanded: false, isPartial: false },
+        testTheme,
+        {} as never
+      )
+    )
+    expect(rendered).toContain('confirmed · verified')
+    expect(rendered).toContain('Clicked Increment')
+  })
   test('exposes schemas', () => {
     expect(schemas.click).toBeDefined()
     expect(schemas.scroll).toBeDefined()
