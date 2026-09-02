@@ -13,6 +13,7 @@ import {
   title,
   toolError
 } from '../shared/render'
+import { ActionEffect, VerificationStatus } from '@trycua/cua-driver'
 import type { ComputerResult } from './driver'
 
 export interface ComputerDetails {
@@ -113,6 +114,33 @@ export function renderCall(label: string, params: unknown, theme: Theme) {
   return renderToolCall(theme, label, { segments, tags })
 }
 
+function actionStatus(details: ComputerDetails): string | undefined {
+  if (details.error) return undefined
+  const action = details.action as { effect?: ActionEffect } | undefined
+  const verification = details.verification as { status?: VerificationStatus } | undefined
+  const parts: string[] = []
+  if (action?.effect !== undefined) {
+    const effects: Record<number, string> = {
+      [ActionEffect.Confirmed]: 'confirmed',
+      [ActionEffect.Partial]: 'partial',
+      [ActionEffect.Unverifiable]: 'unverified',
+      [ActionEffect.SuspectedNoop]: 'suspected no-op',
+      [ActionEffect.Refused]: 'refused'
+    }
+    parts.push(effects[action.effect] ?? 'attempted')
+  }
+  if (verification?.status !== undefined) {
+    const statuses: Record<number, string> = {
+      [VerificationStatus.Satisfied]: 'verified',
+      [VerificationStatus.Unsatisfied]: 'not verified',
+      [VerificationStatus.Unknown]: 'verification unknown'
+    }
+    parts.push(statuses[verification.status] ?? 'verification unknown')
+  }
+  if (details.degraded) parts.push('degraded')
+  return parts.length > 0 ? parts.join(' · ') : undefined
+}
+
 export function renderResult(
   resultValue: AgentToolResult<unknown>,
   _options: ToolRenderResultOptions,
@@ -149,5 +177,9 @@ export function renderResult(
     })
   }
   const text = resultValue.content.find((part) => part.type === 'text')?.text ?? ''
-  return renderLines([primary(text, theme)])
+  const status = details ? actionStatus(details) : undefined
+  return renderLines([
+    ...(status ? [meta(status, theme)] : []),
+    ...(text ? [primary(text, theme)] : [])
+  ])
 }
