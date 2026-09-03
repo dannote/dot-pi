@@ -274,6 +274,29 @@ describe('computer SDK adapter', () => {
     ])
   })
 
+  test('resolves window handles for typed coordinate actions', async () => {
+    const h = harness()
+    const f = fakeDriver()
+    registerComputerTools(h.pi, f.factory)
+    await h.tools
+      .find((tool) => tool.name === 'computer_windows')!
+      .execute('0', {}, undefined, undefined, {} as never)
+    await h.tools
+      .find((tool) => tool.name === 'computer_click')!
+      .execute(
+        '1',
+        { x: 10, y: 20, target: { kind: 'window', window: '@w1' } },
+        undefined,
+        undefined,
+        {} as never
+      )
+    expect(f.calls).toContainEqual([
+      'click',
+      expect.objectContaining({
+        target: expect.objectContaining({ inner: { pid: 42, windowId: 7n } })
+      })
+    ])
+  })
   test('routes semantic clicks through Cua element tokens', async () => {
     const h = harness()
     const f = fakeDriver()

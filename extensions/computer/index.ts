@@ -54,6 +54,14 @@ function resolveWindow(
   return window
 }
 
+function resolver(windows: Map<string, ComputerWindow>) {
+  return (ref: string): ComputerWindow => {
+    const window = windows.get(ref)
+    if (!window) throw new Error(`window ${ref} is unavailable; call computer windows again`)
+    return window
+  }
+}
+
 function windowTarget(params: ComputerParams, windows: Map<string, ComputerWindow>) {
   const window = resolveWindow(params, windows)
   return { pid: window.pid, window_id: window.windowId, session: session(params) }
@@ -142,7 +150,7 @@ const definitions: RegisteredComputerTool[] = [
         ? driver.callTool('click', JSON.stringify(semanticClickArgs(p, elements, windows)), {
             signal: signal!
           })
-        : driver.click(clickInput(p), { signal: signal! })
+        : driver.click(clickInput(p, resolver(windows)), { signal: signal! })
     }
   },
   {
@@ -152,8 +160,8 @@ const definitions: RegisteredComputerTool[] = [
       'Type into the focused control of an exact observed target, then observe again to verify the effect.',
     parameters: schemas.type,
     operation: 'type',
-    execute: (driver, p, _windows, _elements, signal) =>
-      driver.typeText(typeInput(p), { signal: signal! })
+    execute: (driver, p, windows, _elements, signal) =>
+      driver.typeText(typeInput(p, resolver(windows)), { signal: signal! })
   },
   {
     name: 'computer_key',
@@ -162,8 +170,8 @@ const definitions: RegisteredComputerTool[] = [
       'Press a key on an exact observed target, then observe again when the effect matters.',
     parameters: schemas.key,
     operation: 'key',
-    execute: (driver, p, _windows, _elements, signal) =>
-      driver.pressKey(keyInput(p), { signal: signal! })
+    execute: (driver, p, windows, _elements, signal) =>
+      driver.pressKey(keyInput(p, resolver(windows)), { signal: signal! })
   },
   {
     name: 'computer_scroll',
@@ -171,8 +179,8 @@ const definitions: RegisteredComputerTool[] = [
     description: 'Scroll coordinates from the latest observation. Prefer an exact window target.',
     parameters: schemas.scroll,
     operation: 'scroll',
-    execute: (driver, p, _windows, _elements, signal) =>
-      driver.scroll(scrollInput(p), { signal: signal! })
+    execute: (driver, p, windows, _elements, signal) =>
+      driver.scroll(scrollInput(p, resolver(windows)), { signal: signal! })
   }
 ]
 
