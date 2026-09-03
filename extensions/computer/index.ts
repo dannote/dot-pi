@@ -2,7 +2,14 @@ import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
 import type { TSchema } from 'typebox'
 import type { CuaDriverLike, ToolResult } from '@trycua/cua-driver'
 import { errorMessage } from '../shared/errors'
-import { result, failure, renderCall, renderResult } from './render'
+import {
+  result,
+  failure,
+  renderCall,
+  renderResult,
+  type ComputerElement,
+  type ComputerWindow
+} from './render'
 import {
   clickInput,
   defaultFactory,
@@ -26,36 +33,56 @@ interface RegisteredComputerTool {
   description: string
   parameters: TSchema
   operation: string
-  execute(driver: CuaDriverLike, params: ComputerParams, signal?: AbortSignal): Promise<ToolResult>
+  execute(
+    driver: CuaDriverLike,
+    params: ComputerParams,
+    windows: Map<string, ComputerWindow>,
+    elements: Map<string, ComputerElement>,
+    signal?: AbortSignal
+  ): Promise<ToolResult>
 }
 
-function windowTarget(params: ComputerParams) {
-  const value = params.target as { kind?: string; pid?: number; windowId?: number } | undefined
-  if (value?.kind !== 'window') throw new Error('computer observe requires a window target')
-  return { pid: value.pid, window_id: value.windowId, session: session(params) }
+function resolveWindow(
+  params: ComputerParams,
+  windows: Map<string, ComputerWindow>
+): ComputerWindow {
+  const value = params.target as { kind?: string; window?: string } | undefined
+  if (value?.kind !== 'window' || !value.window)
+    throw new Error('an exact window handle is required')
+  const window = windows.get(value.window)
+  if (!window) throw new Error(`window ${value.window} is unavailable; call computer windows again`)
+  return window
+}
+
+function windowTarget(params: ComputerParams, windows: Map<string, ComputerWindow>) {
+  const window = resolveWindow(params, windows)
+  return { pid: window.pid, window_id: window.windowId, session: session(params) }
 }
 
 function validateClickParams(params: ComputerParams): void {
-  const hasToken = typeof params.elementToken === 'string' && params.elementToken.length > 0
+  const hasElement = typeof params.element === 'string' && params.element.length > 0
   const hasX = typeof params.x === 'number'
   const hasY = typeof params.y === 'number'
-  if (hasToken === (hasX || hasY)) {
-    throw new Error('computer click requires either elementToken or x and y')
-  }
-  if (!hasToken && (!hasX || !hasY)) {
-    throw new Error('computer click coordinates require both x and y')
-  }
-  const target = params.target as { kind?: string } | undefined
-  if (hasToken && target?.kind !== 'window') {
-    throw new Error('computer click elementToken requires a window target')
+  if (hasElement) return
+  if (!hasX || !hasY) {
+    throw new Error('computer click requires element, or both x and y')
   }
 }
-function semanticClickArgs(params: ComputerParams) {
-  const value = params.target as { pid: number; windowId: number }
+function semanticClickArgs(
+  params: ComputerParams,
+  elements: Map<string, ComputerElement>,
+  windows: Map<string, ComputerWindow>
+) {
+  const element = elements.get(params.element as string)
+  if (!element)
+    throw new Error(`element ${String(params.element)} is unavailable; observe the window again`)
+  const window = windows.get(element.window)
+  if (!window)
+    throw new Error(`window ${element.window} is unavailable; call computer windows again`)
   return {
-    pid: value.pid,
-    window_id: value.windowId,
-    element_token: params.elementToken,
+    pid: window.pid,
+    window_id: window.windowId,
+    element_token: element.token,
     count: params.count,
     session: session(params)
   }
@@ -72,7 +99,8 @@ const definitions: RegisteredComputerTool[] = [
     description: 'List installed and running desktop applications.',
     parameters: schemas.apps,
     operation: 'apps',
-    execute: (driver, _p, signal) => driver.callTool('list_apps', '{}', { signal: signal! })
+    execute: (driver, _p, _windows, _elements, signal) =>
+      driver.callTool('list_apps', '{}', { signal: signal! })
   },
   {
     name: 'computer_windows',
@@ -80,7 +108,7 @@ const definitions: RegisteredComputerTool[] = [
     description: 'List desktop windows and their process ownership.',
     parameters: schemas.windows,
     operation: 'windows',
-    execute: (driver, p, signal) =>
+    execute: (driver, p, _windows, _elements, signal) =>
       driver.callTool(
         'list_windows',
         JSON.stringify({ on_screen_only: p.onScreenOnly, pid: p.pid }),
@@ -94,22 +122,26 @@ const definitions: RegisteredComputerTool[] = [
       'Observe the desktop or one exact window. Use computer windows first; do not guess window identity or coordinates.',
     parameters: schemas.observe,
     operation: 'observe',
-    execute: (driver, p, signal) =>
+    execute: (driver, p, windows, _elements, signal) =>
       observeTarget(p) === 'window'
-        ? driver.callTool('get_window_state', JSON.stringify(windowTarget(p)), { signal: signal! })
+        ? driver.callTool('get_window_state', JSON.stringify(windowTarget(p, windows)), {
+            signal: signal!
+          })
         : driver.getDesktopState({ session: session(p) }, { signal: signal! })
   },
   {
     name: 'computer_click',
     label: 'computer click',
     description:
-      'Click coordinates from the latest observation. Prefer an exact window target and observe again to verify the effect.',
+      'Click one observed semantic element handle, or coordinates from the latest observation. Do not combine the two addressing modes.',
     parameters: schemas.click,
     operation: 'click',
-    execute: (driver, p, signal) => {
+    execute: (driver, p, windows, elements, signal) => {
       validateClickParams(p)
-      return typeof p.elementToken === 'string'
-        ? driver.callTool('click', JSON.stringify(semanticClickArgs(p)), { signal: signal! })
+      return typeof p.element === 'string'
+        ? driver.callTool('click', JSON.stringify(semanticClickArgs(p, elements, windows)), {
+            signal: signal!
+          })
         : driver.click(clickInput(p), { signal: signal! })
     }
   },
@@ -120,7 +152,8 @@ const definitions: RegisteredComputerTool[] = [
       'Type into the focused control of an exact observed target, then observe again to verify the effect.',
     parameters: schemas.type,
     operation: 'type',
-    execute: (driver, p, signal) => driver.typeText(typeInput(p), { signal: signal! })
+    execute: (driver, p, _windows, _elements, signal) =>
+      driver.typeText(typeInput(p), { signal: signal! })
   },
   {
     name: 'computer_key',
@@ -129,7 +162,8 @@ const definitions: RegisteredComputerTool[] = [
       'Press a key on an exact observed target, then observe again when the effect matters.',
     parameters: schemas.key,
     operation: 'key',
-    execute: (driver, p, signal) => driver.pressKey(keyInput(p), { signal: signal! })
+    execute: (driver, p, _windows, _elements, signal) =>
+      driver.pressKey(keyInput(p), { signal: signal! })
   },
   {
     name: 'computer_scroll',
@@ -137,7 +171,8 @@ const definitions: RegisteredComputerTool[] = [
     description: 'Scroll coordinates from the latest observation. Prefer an exact window target.',
     parameters: schemas.scroll,
     operation: 'scroll',
-    execute: (driver, p, signal) => driver.scroll(scrollInput(p), { signal: signal! })
+    execute: (driver, p, _windows, _elements, signal) =>
+      driver.scroll(scrollInput(p), { signal: signal! })
   }
 ]
 
@@ -146,6 +181,9 @@ export function registerComputerTools(
   factory: ComputerDriverFactory = defaultFactory()
 ): () => Promise<void> {
   let driver: CuaDriverLike | undefined
+  let windows = new Map<string, ComputerWindow>()
+  let nextWindowRef = 1
+  let elements = new Map<string, ComputerElement>()
   const getDriver = () => (driver ??= factory.create())
   for (const definition of definitions) {
     pi.registerTool({
@@ -155,10 +193,75 @@ export function registerComputerTools(
       parameters: definition.parameters,
       async execute(_id, params, signal) {
         try {
-          return result(
-            definition.operation,
-            await definition.execute(getDriver(), params as ComputerParams, signal)
+          const value = await definition.execute(
+            getDriver(),
+            params as ComputerParams,
+            windows,
+            elements,
+            signal
           )
+          if (definition.operation === 'windows' && value.structuredJson) {
+            try {
+              const parsed = JSON.parse(value.structuredJson) as {
+                windows?: Array<Record<string, unknown>>
+              }
+              const previousByIdentity = new Map(
+                [...windows.values()].map((window) => [`${window.pid}:${window.windowId}`, window])
+              )
+              const discovered = (parsed.windows ?? []).flatMap((item) => {
+                if (typeof item.pid !== 'number' || typeof item.window_id !== 'number') return []
+                const identity = `${item.pid}:${item.window_id}`
+                const existing = previousByIdentity.get(identity)
+                const window = existing ?? {
+                  ref: `@w${nextWindowRef++}`,
+                  pid: item.pid,
+                  windowId: item.window_id
+                }
+                return [[window.ref, window] as const]
+              })
+              windows = new Map([...windows, ...discovered])
+            } catch {
+              windows.clear()
+            }
+          }
+          if (definition.operation === 'observe' && value.structuredJson) {
+            try {
+              const parsed = JSON.parse(value.structuredJson) as {
+                elements?: Array<Record<string, unknown>>
+              }
+              const window = (params as ComputerParams).target as { window?: string } | undefined
+              const actionable = (parsed.elements ?? []).filter((item) => {
+                const role = typeof item.role === 'string' ? item.role : ''
+                const label = typeof item.label === 'string' ? item.label : ''
+                return (
+                  typeof item.element_token === 'string' &&
+                  label.length > 0 &&
+                  !['AXWindow', 'AXMenuBar', 'AXMenu'].includes(role)
+                )
+              })
+              elements = new Map(
+                actionable.flatMap((item, index) =>
+                  typeof item.element_token === 'string' && window?.window
+                    ? [
+                        [
+                          `@e${index + 1}`,
+                          {
+                            ref: `@e${index + 1}`,
+                            window: window.window,
+                            token: item.element_token,
+                            role: typeof item.role === 'string' ? item.role : undefined,
+                            label: typeof item.label === 'string' ? item.label : undefined
+                          }
+                        ] as const
+                      ]
+                    : []
+                )
+              )
+            } catch {
+              elements.clear()
+            }
+          }
+          return result(definition.operation, value, [...windows.values()], [...elements.values()])
         } catch (error) {
           return failure(definition.operation, errorMessage(error))
         }
@@ -168,6 +271,9 @@ export function registerComputerTools(
     })
   }
   return async () => {
+    windows.clear()
+    nextWindowRef = 1
+    elements.clear()
     if (driver) await driver.shutdown()
     driver = undefined
   }

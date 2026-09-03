@@ -30,14 +30,8 @@ export function target(value: unknown): ComputerTarget | undefined {
     }
     return { kind: 'desktop', displayId: input.displayId ?? 'primary' }
   }
-  if (input.kind === 'window') {
-    if (!Number.isInteger(input.pid) || (input.pid as number) < 1) {
-      throw new Error('target.pid must be a positive integer')
-    }
-    if (!Number.isInteger(input.windowId) || (input.windowId as number) < 1) {
-      throw new Error('target.windowId must be a positive integer')
-    }
-    return { kind: 'window', pid: input.pid as number, windowId: input.windowId as number }
+  if (input.kind === 'window' && typeof input.window === 'string') {
+    return { kind: 'window', window: input.window }
   }
   throw new Error('target.kind must be desktop or window')
 }
@@ -46,7 +40,7 @@ export function sdkTarget(value: unknown) {
   const input = target(value)
   if (!input) return undefined
   if (input.kind === 'desktop') return new ActionTarget.Desktop({ displayId: input.displayId })
-  return new ActionTarget.Window({ pid: input.pid, windowId: BigInt(input.windowId) })
+  throw new Error('window handles must be resolved by the computer extension')
 }
 
 export function direction(value: unknown): ScrollDirection {

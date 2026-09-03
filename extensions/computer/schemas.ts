@@ -2,16 +2,12 @@ import { type TSchema, Type } from 'typebox'
 
 export type ComputerTarget =
   | { kind: 'desktop'; displayId: string }
-  | { kind: 'window'; pid: number; windowId: number }
+  | { kind: 'window'; window: string }
 
 const target = Type.Optional(
   Type.Union([
     Type.Object({ kind: Type.Literal('desktop'), displayId: Type.Optional(Type.String()) }),
-    Type.Object({
-      kind: Type.Literal('window'),
-      pid: Type.Integer({ minimum: 1 }),
-      windowId: Type.Integer({ minimum: 1 })
-    })
+    Type.Object({ kind: Type.Literal('window'), window: Type.String({ pattern: '^@w\\d+$' }) })
   ])
 )
 
@@ -23,7 +19,7 @@ export const schemas = {
   }),
   observe: Type.Object({ target, session: Type.Optional(Type.String()) }),
   click: Type.Object({
-    elementToken: Type.Optional(Type.String()),
+    element: Type.Optional(Type.String({ pattern: '^@e\\d+$' })),
     x: Type.Optional(Type.Number()),
     y: Type.Optional(Type.Number()),
     count: Type.Optional(Type.Integer({ minimum: 1, maximum: 3 })),

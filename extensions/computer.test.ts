@@ -72,6 +72,20 @@ function fakeDriver() {
     },
     callTool: async (name: string, input: string) => {
       calls.push([name, JSON.parse(input)])
+      if (name === 'list_windows') {
+        return result(name, {
+          structuredJson: JSON.stringify({
+            windows: [{ app_name: 'Fixture', pid: 42, window_id: 7, title: 'Fixture' }]
+          })
+        })
+      }
+      if (name === 'get_window_state') {
+        return result(name, {
+          structuredJson: JSON.stringify({
+            elements: [{ element_token: 's1:4', role: 'AXButton', label: 'Increment' }]
+          })
+        })
+      }
       return result(name)
     },
     click: async (input: unknown) => {
@@ -163,6 +177,32 @@ describe('computer SDK adapter', () => {
     )
     expect(rendered).toContain('Found two applications')
   })
+  test('all computer tools expose object-root schemas accepted by providers', () => {
+    const h = harness()
+    computer(h.pi)
+    for (const tool of h.tools) {
+      expect((tool.parameters as { type?: string }).type, tool.name).toBe('object')
+    }
+  })
+
+  test('rejects stale window handles', async () => {
+    const h = harness()
+    const f = fakeDriver()
+    registerComputerTools(h.pi, f.factory)
+    const observed = await h.tools
+      .find((tool) => tool.name === 'computer_observe')!
+      .execute(
+        '1',
+        { target: { kind: 'window', window: '@w9' } },
+        undefined,
+        undefined,
+        {} as never
+      )
+    expect(observed.content[0]).toMatchObject({
+      type: 'text',
+      text: expect.stringContaining('window @w9 is unavailable')
+    })
+  })
   test('exposes concise labels without underscores', () => {
     const h = harness()
     computer(h.pi)
@@ -183,6 +223,10 @@ describe('computer SDK adapter', () => {
     const f = fakeDriver()
     registerComputerTools(h.pi, f.factory)
     const observe = h.tools.find((tool) => tool.name === 'computer_observe')!
+    await h.tools
+      .find((tool) => tool.name === 'computer_windows')!
+      .execute('1', {}, undefined, undefined, {} as never)
+    f.calls.length = 0
     await observe.execute(
       '2',
       { target: { kind: 'desktop', displayId: 'primary' } },
@@ -192,7 +236,7 @@ describe('computer SDK adapter', () => {
     )
     await observe.execute(
       '3',
-      { target: { kind: 'window', pid: 42, windowId: 7 } },
+      { target: { kind: 'window', window: '@w1' } },
       undefined,
       undefined,
       {} as never
@@ -235,14 +279,20 @@ describe('computer SDK adapter', () => {
     const f = fakeDriver()
     registerComputerTools(h.pi, f.factory)
     await h.tools
-      .find((tool) => tool.name === 'computer_click')!
+      .find((tool) => tool.name === 'computer_windows')!
+      .execute('0', {}, undefined, undefined, {} as never)
+    await h.tools
+      .find((tool) => tool.name === 'computer_observe')!
       .execute(
-        '1',
-        { elementToken: 's1:4', target: { kind: 'window', pid: 42, windowId: 7 } },
+        'observe',
+        { target: { kind: 'window', window: '@w1' } },
         undefined,
         undefined,
         {} as never
       )
+    await h.tools
+      .find((tool) => tool.name === 'computer_click')!
+      .execute('1', { element: '@e1' }, undefined, undefined, {} as never)
     expect(f.calls).toContainEqual(['click', { pid: 42, window_id: 7, element_token: 's1:4' }])
   })
   test('shuts down lazily-created driver', async () => {
@@ -265,7 +315,7 @@ describe('computer SDK adapter', () => {
     const click = labels
       .get('computer_click')!
       .renderCall?.(
-        { x: 10, y: 20, count: 2, target: { kind: 'window', pid: 42, windowId: 7 } },
+        { x: 10, y: 20, count: 2, target: { kind: 'window', window: '@w1' } },
         testTheme,
         {} as never
       )
@@ -277,7 +327,7 @@ describe('computer SDK adapter', () => {
         {} as never
       )
     expect(click?.render(120).join('\n')).toContain('10,20')
-    expect(click?.render(120).join('\n')).toContain('window:42/7')
+    expect(click?.render(120).join('\n')).toContain('@w1')
     expect(click?.render(120).join('\n')).toContain('2 clicks')
     expect(key?.render(120).join('\n')).toContain('cmd+k')
     expect(key?.render(120).join('\n')).toContain('desktop')
@@ -287,20 +337,17 @@ describe('computer SDK adapter', () => {
       Value.Check(schemas.click, {
         x: 1,
         y: 2,
-        target: { kind: 'window', pid: 42, windowId: 7 }
+        target: { kind: 'window', window: '@w1' }
       })
     ).toBe(true)
     expect(
       Value.Check(schemas.click, {
         x: 1,
         y: 2,
-        target: { kind: 'window', pid: 0, windowId: 7 }
+        target: { kind: 'window', window: 'bad' }
       })
     ).toBe(false)
     expect(sdkTarget({ kind: 'desktop' })).toMatchObject({ inner: { displayId: 'primary' } })
-    expect(sdkTarget({ kind: 'window', pid: 42, windowId: 7 })).toMatchObject({
-      inner: { pid: 42, windowId: 7n }
-    })
   })
 
   test('renders action and verification status from structured Cua metadata', () => {

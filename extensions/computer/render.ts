@@ -16,6 +16,20 @@ import {
 import { ActionEffect, VerificationStatus } from '@trycua/cua-driver'
 import type { ComputerResult } from './driver'
 
+export interface ComputerElement {
+  ref: string
+  window: string
+  token: string
+  role?: string
+  label?: string
+}
+
+export interface ComputerWindow {
+  ref: string
+  pid: number
+  windowId: number
+}
+
 export interface ComputerDetails {
   operation: string
   error?: boolean
@@ -26,9 +40,16 @@ export interface ComputerDetails {
   verification?: unknown
   rawJson?: string
   items?: Array<Record<string, unknown>>
+  windows?: ComputerWindow[]
+  elements?: ComputerElement[]
 }
 
-export function result(operation: string, value: ComputerResult) {
+export function result(
+  operation: string,
+  value: ComputerResult,
+  windows?: ComputerWindow[],
+  elements?: ComputerElement[]
+) {
   const text = value.text || `${operation} completed`
   let items: Array<Record<string, unknown>> | undefined
   if (value.structuredJson) {
@@ -61,7 +82,9 @@ export function result(operation: string, value: ComputerResult) {
       action: value.action,
       verification: value.verification,
       rawJson: value.rawJson,
-      items
+      items,
+      windows,
+      elements
     } satisfies ComputerDetails,
     ...(value.isError ? { isError: true } : {})
   }
@@ -79,7 +102,7 @@ function displayTarget(target: unknown): string | undefined {
   const value = target as Record<string, unknown>
   if (value.kind === 'desktop')
     return `desktop${value.displayId && value.displayId !== 'primary' ? `:${value.displayId}` : ''}`
-  if (value.kind === 'window') return `window:${value.pid}/${value.windowId}`
+  if (value.kind === 'window') return String(value.window ?? 'window')
   return undefined
 }
 
@@ -92,8 +115,7 @@ function quoteText(value: string): string {
 export function renderCall(label: string, params: unknown, theme: Theme) {
   const args = (params ?? {}) as Record<string, unknown>
   const segments: Array<{ text?: string; color?: 'accent' | 'muted' | 'dim' | 'success' }> = []
-  if (typeof args.elementToken === 'string')
-    segments.push({ text: args.elementToken, color: 'accent' })
+  if (typeof args.element === 'string') segments.push({ text: args.element, color: 'accent' })
   if (typeof args.text === 'string') segments.push({ text: quoteText(args.text) })
   if (typeof args.x === 'number' && typeof args.y === 'number') {
     segments.push({ text: `${args.x},${args.y}`, color: 'accent' })
@@ -160,7 +182,11 @@ export function renderResult(
         const isApp = details.operation === 'apps'
         const name = String(isApp ? (item.name ?? 'Application') : (item.app_name ?? 'Window'))
         const subtitle = isApp ? undefined : typeof item.title === 'string' ? item.title : undefined
+        const window = !isApp
+          ? details.windows?.find((candidate) => candidate.windowId === item.window_id)
+          : undefined
         const metadata = [
+          window?.ref,
           typeof item.pid === 'number' ? `pid ${item.pid}` : undefined,
           !isApp && typeof item.window_id === 'number' ? `window ${item.window_id}` : undefined,
           item.active === true ? 'active' : undefined,
@@ -176,6 +202,17 @@ export function renderResult(
         }
       },
       hiddenLines: (hidden) => (hidden > 0 ? [meta(`… ${hidden} more`, theme)] : [])
+    })
+  }
+  if (details?.operation === 'observe' && details.elements?.length) {
+    return renderEntryList(details.elements, theme, {
+      expanded: _options.expanded,
+      compactLimit: 12,
+      renderEntry: (element) => ({
+        header: title(`${element.ref} ${element.role ?? 'element'}`, theme),
+        body: element.label ? [primary(element.label, theme)] : undefined
+      }),
+      hiddenLines: (hidden) => (hidden > 0 ? [meta(`… ${hidden} more elements`, theme)] : [])
     })
   }
   const text = resultValue.content.find((part) => part.type === 'text')?.text ?? ''
