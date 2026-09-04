@@ -7,7 +7,17 @@
   },
   "rules": {
     "no-unused-vars": "warn",
-    "no-console": "off",
+    "no-empty-function": "warn",
+    "max-lines": ["warn", { "max": 600, "skipBlankLines": true, "skipComments": true }],
+    "max-lines-per-function": [
+      "warn",
+      { "max": 100, "skipBlankLines": true, "skipComments": true, "IIFEs": true }
+    ],
+    "complexity": ["warn", { "max": 20 }],
+    "max-depth": ["warn", 4],
+    "max-nested-callbacks": ["warn", 4],
+    "max-params": ["warn", { "max": 5 }],
+    "max-statements": ["warn", { "max": 30 }],
     "eqeqeq": ["error", "always", { "null": "ignore" }],
     "prefer-const": "error",
     "radix": "error",
@@ -28,5 +38,21 @@
     "import/no-duplicates": "error",
     "unicorn/no-nested-ternary": "error",
     "unicorn/prefer-string-starts-ends-with": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["extensions/computer/**/*.ts"],
+      "rules": {
+        "max-lines-per-function": [
+          "error",
+          { "max": 80, "skipBlankLines": true, "skipComments": true, "IIFEs": true }
+        ],
+        "complexity": ["error", { "max": 20 }],
+        "max-depth": ["error", 4],
+        "max-nested-callbacks": ["error", 4],
+        "max-params": ["error", { "max": 5 }],
+        "max-statements": ["error", { "max": 30 }]
+      }
+    }
+  ]
 }

@@ -26,9 +26,15 @@ export const schemas = {
     target,
     session: Type.Optional(Type.String())
   }),
-  type: Type.Object({ text: Type.String(), target, session: Type.Optional(Type.String()) }),
+  type: Type.Object({
+    text: Type.String(),
+    element: Type.Optional(Type.String({ pattern: '^@e\\d+$' })),
+    target,
+    session: Type.Optional(Type.String())
+  }),
   key: Type.Object({
     key: Type.String(),
+    element: Type.Optional(Type.String({ pattern: '^@e\\d+$' })),
     modifiers: Type.Optional(Type.Array(Type.String())),
     target,
     session: Type.Optional(Type.String())

@@ -112,12 +112,12 @@ function quoteText(value: string): string {
   return JSON.stringify(truncated)
 }
 
-export function renderCall(label: string, params: unknown, theme: Theme) {
-  const args = (params ?? {}) as Record<string, unknown>
+function callSegments(args: Record<string, unknown>) {
   const segments: Array<{ text?: string; color?: 'accent' | 'muted' | 'dim' | 'success' }> = []
-  if (typeof args.element === 'string') segments.push({ text: args.element, color: 'accent' })
+  const hasElement = typeof args.element === 'string'
+  if (hasElement) segments.push({ text: args.element as string, color: 'accent' })
   if (typeof args.text === 'string') segments.push({ text: quoteText(args.text) })
-  if (typeof args.x === 'number' && typeof args.y === 'number') {
+  if (!hasElement && typeof args.x === 'number' && typeof args.y === 'number') {
     segments.push({ text: `${args.x},${args.y}`, color: 'accent' })
   }
   if (typeof args.key === 'string') {
@@ -126,16 +126,24 @@ export function renderCall(label: string, params: unknown, theme: Theme) {
       : []
     segments.push({ text: [...modifiers, args.key].join('+'), color: 'accent' })
   }
-  const targetText = displayTarget(args.target)
-  const tags = [
-    targetText,
+  return { segments, hasElement }
+}
+
+function callTags(args: Record<string, unknown>, hasElement: boolean) {
+  return [
+    hasElement ? undefined : displayTarget(args.target),
     typeof args.count === 'number' && args.count > 1 ? `${args.count} clicks` : undefined,
     typeof args.direction === 'string'
       ? `${args.direction}${args.by === 'page' ? ' page' : ''}${typeof args.amount === 'number' ? ` ${args.amount}` : ''}`
       : undefined,
     typeof args.session === 'string' && args.session ? `session:${args.session}` : undefined
   ]
-  return renderToolCall(theme, label, { segments, tags })
+}
+
+export function renderCall(label: string, params: unknown, theme: Theme) {
+  const args = (params ?? {}) as Record<string, unknown>
+  const { segments, hasElement } = callSegments(args)
+  return renderToolCall(theme, label, { segments, tags: callTags(args, hasElement) })
 }
 
 function actionStatus(details: ComputerDetails): string | undefined {
@@ -165,6 +173,30 @@ function actionStatus(details: ComputerDetails): string | undefined {
   return parts.length > 0 ? parts.join(' · ') : undefined
 }
 
+function discoveryEntry(item: Record<string, unknown>, details: ComputerDetails, theme: Theme) {
+  const isApp = details.operation === 'apps'
+  const name = String(isApp ? (item.name ?? 'Application') : (item.app_name ?? 'Window'))
+  const subtitle = isApp ? undefined : typeof item.title === 'string' ? item.title : undefined
+  const window = !isApp
+    ? details.windows?.find((candidate) => candidate.windowId === item.window_id)
+    : undefined
+  const metadata = [
+    window?.ref,
+    typeof item.pid === 'number' ? `pid ${item.pid}` : undefined,
+    !isApp && typeof item.window_id === 'number' ? `window ${item.window_id}` : undefined,
+    item.active === true ? 'active' : undefined,
+    item.running === false ? 'not running' : undefined,
+    item.on_current_space === false ? 'another space' : undefined
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  return {
+    header: title(name, theme),
+    metadata: metadata ? meta(metadata, theme) : undefined,
+    body: subtitle ? [primary(subtitle, theme)] : undefined
+  }
+}
+
 export function renderResult(
   resultValue: AgentToolResult<unknown>,
   _options: ToolRenderResultOptions,
@@ -178,29 +210,7 @@ export function renderResult(
     return renderEntryList(items, theme, {
       expanded: _options.expanded,
       compactLimit: 5,
-      renderEntry: (item) => {
-        const isApp = details.operation === 'apps'
-        const name = String(isApp ? (item.name ?? 'Application') : (item.app_name ?? 'Window'))
-        const subtitle = isApp ? undefined : typeof item.title === 'string' ? item.title : undefined
-        const window = !isApp
-          ? details.windows?.find((candidate) => candidate.windowId === item.window_id)
-          : undefined
-        const metadata = [
-          window?.ref,
-          typeof item.pid === 'number' ? `pid ${item.pid}` : undefined,
-          !isApp && typeof item.window_id === 'number' ? `window ${item.window_id}` : undefined,
-          item.active === true ? 'active' : undefined,
-          item.running === false ? 'not running' : undefined,
-          item.on_current_space === false ? 'another space' : undefined
-        ]
-          .filter(Boolean)
-          .join(' · ')
-        return {
-          header: title(name, theme),
-          metadata: metadata ? meta(metadata, theme) : undefined,
-          body: subtitle ? [primary(subtitle, theme)] : undefined
-        }
-      },
+      renderEntry: (item) => discoveryEntry(item, details, theme),
       hiddenLines: (hidden) => (hidden > 0 ? [meta(`… ${hidden} more`, theme)] : [])
     })
   }

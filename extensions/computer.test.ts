@@ -355,6 +355,21 @@ describe('computer SDK adapter', () => {
     expect(key?.render(120).join('\n')).toContain('cmd+k')
     expect(key?.render(120).join('\n')).toContain('desktop')
   })
+  test('semantic call widgets suppress ignored coordinates and redundant targets', () => {
+    const h = harness()
+    computer(h.pi)
+    const click = h.tools
+      .find((tool) => tool.name === 'computer_click')!
+      .renderCall?.(
+        { element: '@e1', x: 0, y: 0, target: { kind: 'window', window: '@w1' } },
+        testTheme,
+        {} as never
+      )
+    const rendered = click?.render(120).join('\n') ?? ''
+    expect(rendered).toContain('computer click @e1')
+    expect(rendered).not.toContain('0,0')
+    expect(rendered).not.toContain('@w1')
+  })
   test('validates targets and converts them to Cua targets', () => {
     expect(
       Value.Check(schemas.click, {

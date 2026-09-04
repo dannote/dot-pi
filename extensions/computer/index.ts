@@ -20,6 +20,7 @@ import {
   type ComputerDriverFactory
 } from './driver'
 import { schemas, type ComputerParams } from './schemas'
+import { createState, queueKey, resetState, updateElements, updateWindows } from './state'
 
 const COMPUTER_GUIDANCE = [
   'Use computer tools for native desktop applications, system dialogs, file pickers, and browser chrome. Use agent-browser for webpage DOM, navigation, tabs, network, console, cookies, storage, downloads, and web screenshots.',
@@ -76,7 +77,7 @@ function validateClickParams(params: ComputerParams): void {
     throw new Error('computer click requires element, or both x and y')
   }
 }
-function semanticClickArgs(
+function semanticElementArgs(
   params: ComputerParams,
   elements: Map<string, ComputerElement>,
   windows: Map<string, ComputerWindow>
@@ -87,6 +88,15 @@ function semanticClickArgs(
   const window = windows.get(element.window)
   if (!window)
     throw new Error(`window ${element.window} is unavailable; call computer windows again`)
+  return { element, window }
+}
+
+function semanticClickArgs(
+  params: ComputerParams,
+  elements: Map<string, ComputerElement>,
+  windows: Map<string, ComputerWindow>
+) {
+  const { element, window } = semanticElementArgs(params, elements, windows)
   return {
     pid: window.pid,
     window_id: window.windowId,
@@ -160,8 +170,23 @@ const definitions: RegisteredComputerTool[] = [
       'Type into the focused control of an exact observed target, then observe again to verify the effect.',
     parameters: schemas.type,
     operation: 'type',
-    execute: (driver, p, windows, _elements, signal) =>
-      driver.typeText(typeInput(p, resolver(windows)), { signal: signal! })
+    execute: (driver, p, windows, elements, signal) =>
+      typeof p.element === 'string'
+        ? (() => {
+            const { element, window } = semanticElementArgs(p, elements, windows)
+            return driver.callTool(
+              'type_text',
+              JSON.stringify({
+                pid: window.pid,
+                window_id: window.windowId,
+                element_token: element.token,
+                text: p.text,
+                session: session(p)
+              }),
+              { signal: signal! }
+            )
+          })()
+        : driver.typeText(typeInput(p, resolver(windows)), { signal: signal! })
   },
   {
     name: 'computer_key',
@@ -170,8 +195,24 @@ const definitions: RegisteredComputerTool[] = [
       'Press a key on an exact observed target, then observe again when the effect matters.',
     parameters: schemas.key,
     operation: 'key',
-    execute: (driver, p, windows, _elements, signal) =>
-      driver.pressKey(keyInput(p, resolver(windows)), { signal: signal! })
+    execute: (driver, p, windows, elements, signal) =>
+      typeof p.element === 'string'
+        ? (() => {
+            const { element, window } = semanticElementArgs(p, elements, windows)
+            return driver.callTool(
+              'press_key',
+              JSON.stringify({
+                pid: window.pid,
+                window_id: window.windowId,
+                element_token: element.token,
+                key: p.key,
+                modifiers: p.modifiers,
+                session: session(p)
+              }),
+              { signal: signal! }
+            )
+          })()
+        : driver.pressKey(keyInput(p, resolver(windows)), { signal: signal! })
   },
   {
     name: 'computer_scroll',
@@ -189,9 +230,25 @@ export function registerComputerTools(
   factory: ComputerDriverFactory = defaultFactory()
 ): () => Promise<void> {
   let driver: CuaDriverLike | undefined
-  let windows = new Map<string, ComputerWindow>()
-  let nextWindowRef = 1
-  let elements = new Map<string, ComputerElement>()
+  const state = createState()
+  const queues = new Map<string, Promise<void>>()
+  const schedule = async <T>(key: string, task: () => Promise<T>): Promise<T> => {
+    const previous = queues.get(key) ?? Promise.resolve()
+    let release!: () => void
+    const current = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    queues.set(
+      key,
+      previous.then(() => current)
+    )
+    await previous
+    try {
+      return await task()
+    } finally {
+      release()
+    }
+  }
   const getDriver = () => (driver ??= factory.create())
   for (const definition of definitions) {
     pi.registerTool({
@@ -201,75 +258,18 @@ export function registerComputerTools(
       parameters: definition.parameters,
       async execute(_id, params, signal) {
         try {
-          const value = await definition.execute(
-            getDriver(),
-            params as ComputerParams,
-            windows,
-            elements,
-            signal
+          const paramsValue = params as ComputerParams
+          const value = await schedule(queueKey(paramsValue, state), () =>
+            definition.execute(getDriver(), paramsValue, state.windows, state.elements, signal)
           )
-          if (definition.operation === 'windows' && value.structuredJson) {
-            try {
-              const parsed = JSON.parse(value.structuredJson) as {
-                windows?: Array<Record<string, unknown>>
-              }
-              const previousByIdentity = new Map(
-                [...windows.values()].map((window) => [`${window.pid}:${window.windowId}`, window])
-              )
-              const discovered = (parsed.windows ?? []).flatMap((item) => {
-                if (typeof item.pid !== 'number' || typeof item.window_id !== 'number') return []
-                const identity = `${item.pid}:${item.window_id}`
-                const existing = previousByIdentity.get(identity)
-                const window = existing ?? {
-                  ref: `@w${nextWindowRef++}`,
-                  pid: item.pid,
-                  windowId: item.window_id
-                }
-                return [[window.ref, window] as const]
-              })
-              windows = new Map([...windows, ...discovered])
-            } catch {
-              windows.clear()
-            }
-          }
-          if (definition.operation === 'observe' && value.structuredJson) {
-            try {
-              const parsed = JSON.parse(value.structuredJson) as {
-                elements?: Array<Record<string, unknown>>
-              }
-              const window = (params as ComputerParams).target as { window?: string } | undefined
-              const actionable = (parsed.elements ?? []).filter((item) => {
-                const role = typeof item.role === 'string' ? item.role : ''
-                const label = typeof item.label === 'string' ? item.label : ''
-                return (
-                  typeof item.element_token === 'string' &&
-                  label.length > 0 &&
-                  !['AXWindow', 'AXMenuBar', 'AXMenu'].includes(role)
-                )
-              })
-              elements = new Map(
-                actionable.flatMap((item, index) =>
-                  typeof item.element_token === 'string' && window?.window
-                    ? [
-                        [
-                          `@e${index + 1}`,
-                          {
-                            ref: `@e${index + 1}`,
-                            window: window.window,
-                            token: item.element_token,
-                            role: typeof item.role === 'string' ? item.role : undefined,
-                            label: typeof item.label === 'string' ? item.label : undefined
-                          }
-                        ] as const
-                      ]
-                    : []
-                )
-              )
-            } catch {
-              elements.clear()
-            }
-          }
-          return result(definition.operation, value, [...windows.values()], [...elements.values()])
+          if (definition.operation === 'windows') updateWindows(state, value)
+          if (definition.operation === 'observe') updateElements(state, value, paramsValue)
+          return result(
+            definition.operation,
+            value,
+            [...state.windows.values()],
+            [...state.elements.values()]
+          )
         } catch (error) {
           return failure(definition.operation, errorMessage(error))
         }
@@ -279,9 +279,8 @@ export function registerComputerTools(
     })
   }
   return async () => {
-    windows.clear()
-    nextWindowRef = 1
-    elements.clear()
+    resetState(state)
+    queues.clear()
     if (driver) await driver.shutdown()
     driver = undefined
   }
