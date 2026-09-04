@@ -43,7 +43,7 @@ export function createOperations(pi: ExtensionAPI): Operations {
       if (nameError) throw new Error(nameError)
       const path = worktreePathFor(cwd, name)
       if (existsSync(path)) throw new Error(`Worktree "${name}" already exists at ${path}`)
-      const ignored = await pi.exec('git', ['check-ignore', '-q', '.worktrees'], { cwd, signal })
+      const ignored = await pi.exec('git', ['check-ignore', '-q', '.worktrees/'], { cwd, signal })
       if (ignored.code !== 0) {
         throw new Error(
           '.worktrees/ must be ignored before creating a worktree; add it to .gitignore explicitly'
