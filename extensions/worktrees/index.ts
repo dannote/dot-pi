@@ -1,714 +1,107 @@
-/**
- * Git Worktrees Extension
- *
- * Provides tools for managing git worktrees, enabling isolated workspaces
- * for parallel agent work. Each worktree has its own branch and working
- * directory, perfect for running multiple subagents simultaneously.
- *
- * Features:
- * - Create/list/remove worktrees via tools
- * - Auto-detect and run project setup (bun, npm, cargo, etc.)
- * - Status widget showing active worktrees
- * - System prompt injection for LLM awareness
- *
- * Usage with subagent:
- *   1. worktree_create(name: "fix-auth")
- *   2. worktree_create(name: "add-feature")
- *   3. subagent(tasks: [
- *        { agent: "worker", task: "...", cwd: ".worktrees/fix-auth" },
- *        { agent: "worker", task: "...", cwd: ".worktrees/add-feature" },
- *      ])
- *   4. Review changes, merge branches
- *   5. worktree_remove("fix-auth"), worktree_remove("add-feature")
- */
-
-import { appendFileSync, existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent'
-import { getSelectListTheme } from '@earendil-works/pi-coding-agent'
-import {
-  type Component,
-  Key,
-  matchesKey,
-  type SelectItem,
-  SelectList,
-  truncateToWidth
-} from '@earendil-works/pi-tui'
-import { Type } from 'typebox'
-import { commandFailure, commandOutput } from '../shared/process'
+import type { ExtensionAPI } from '@earendil-works/pi-coding-agent'
 import { toolError, toolText } from '../shared/render'
-import {
-  formatWorktreeList,
-  formatWorktreeStatus,
-  isDirtyWorktreeRemovalError,
-  parseWorktreePorcelain,
-  validateWorktreeName,
-  worktreePathFor,
-  WORKTREES_DIR,
-  type WorktreeDetails,
-  type WorktreeEntry,
-  type WorktreeInfo,
-  type WorktreeListDetails
-} from './git'
+import { createOperations } from './operations'
+import { renderCall, renderResult, type WorktreeResultDetails } from './render'
+import { createSchema, listSchema, removeSchema, statusSchema } from './schemas'
+import type { WorktreeEntry } from './git'
 
-export default function worktreesExtension(pi: ExtensionAPI) {
-  const worktrees = new Map<string, WorktreeInfo>()
+function ok(
+  action: WorktreeResultDetails['action'],
+  text: string,
+  worktrees: WorktreeEntry[],
+  extra: Partial<WorktreeResultDetails> = {}
+) {
+  return toolText(text, { action, worktrees, ...extra } satisfies WorktreeResultDetails)
+}
 
-  function updateStatusWidget(ctx: ExtensionContext): void {
-    if (!ctx.hasUI) return
+function failure(action: WorktreeResultDetails['action'], error: unknown) {
+  const message = error instanceof Error ? error.message : String(error)
+  return toolError(message, { action, worktrees: [], error: true } satisfies WorktreeResultDetails)
+}
 
-    const theme = ctx.ui.theme
-    const count = worktrees.size
-
-    if (count === 0) {
-      ctx.ui.setStatus('worktrees', undefined)
-      return
-    }
-
-    // Footer status: count + current worktree name
-    const icon = theme.fg('accent', '⎇')
-    const names = Array.from(worktrees.keys()).join(', ')
-    const text = theme.fg('dim', ` ${count}: ${names}`)
-    ctx.ui.setStatus('worktrees', icon + text)
-  }
-
-  async function ensureGitignore(cwd: string): Promise<{ added: boolean; error?: string }> {
-    const gitignorePath = join(cwd, '.gitignore')
-
-    try {
-      // Check if .worktrees is already ignored
-      const result = await pi.exec('git', ['check-ignore', '-q', WORKTREES_DIR], { cwd })
-      if (result.code === 0) {
-        return { added: false }
-      }
-    } catch {
-      // Not ignored, continue to add
-    }
-
-    // Add to .gitignore
-    try {
-      const existingContent = existsSync(gitignorePath) ? readFileSync(gitignorePath, 'utf-8') : ''
-      const newline = existingContent.endsWith('\n') || existingContent === '' ? '' : '\n'
-      const entry = `${newline}# Git worktrees for parallel agent work\n${WORKTREES_DIR}/\n`
-
-      appendFileSync(gitignorePath, entry)
-      return { added: true }
-    } catch (err) {
-      return { added: false, error: `Failed to update .gitignore: ${err}` }
-    }
-  }
-
-  async function detectAndRunSetup(
-    worktreePath: string,
-    onUpdate?: (text: string) => void
-  ): Promise<string[]> {
-    const steps: string[] = []
-
-    const lockFiles = [
-      { file: 'bun.lock', cmd: 'bun', args: ['install'] },
-      { file: 'bun.lockb', cmd: 'bun', args: ['install'] },
-      { file: 'pnpm-lock.yaml', cmd: 'pnpm', args: ['install'] },
-      { file: 'yarn.lock', cmd: 'yarn', args: ['install'] },
-      { file: 'package-lock.json', cmd: 'npm', args: ['install'] },
-      { file: 'package.json', cmd: 'bun', args: ['install'] } // Default to bun
-    ]
-
-    // JavaScript/TypeScript
-    for (const { file, cmd, args } of lockFiles) {
-      if (existsSync(join(worktreePath, file))) {
-        onUpdate?.(`Running ${cmd} ${args.join(' ')}...`)
-        const result = await pi.exec(cmd, args, { cwd: worktreePath, timeout: 120000 })
-        if (result.code === 0) {
-          steps.push(`${cmd} ${args.join(' ')}`)
-        } else {
-          steps.push(`${cmd} ${args.join(' ')} (failed: ${result.code})`)
-        }
-        break
-      }
-    }
-
-    // Rust
-    if (existsSync(join(worktreePath, 'Cargo.toml'))) {
-      onUpdate?.('Running cargo build...')
-      const result = await pi.exec('cargo', ['build'], { cwd: worktreePath, timeout: 300000 })
-      if (result.code === 0) {
-        steps.push('cargo build')
-      } else {
-        steps.push(`cargo build (failed: ${result.code})`)
-      }
-    }
-
-    // Go
-    if (existsSync(join(worktreePath, 'go.mod'))) {
-      onUpdate?.('Running go mod download...')
-      const result = await pi.exec('go', ['mod', 'download'], {
-        cwd: worktreePath,
-        timeout: 60000
-      })
-      if (result.code === 0) {
-        steps.push('go mod download')
-      } else {
-        steps.push(`go mod download (failed: ${result.code})`)
-      }
-    }
-
-    // Python
-    if (existsSync(join(worktreePath, 'requirements.txt'))) {
-      // Check for uv first
-      const uvCheck = await pi.exec('which', ['uv'])
-      if (uvCheck.code === 0) {
-        onUpdate?.('Running uv pip install...')
-        const result = await pi.exec('uv', ['pip', 'install', '-r', 'requirements.txt'], {
-          cwd: worktreePath,
-          timeout: 120000
-        })
-        steps.push(result.code === 0 ? 'uv pip install' : `uv pip install (failed: ${result.code})`)
-      } else {
-        onUpdate?.('Running pip install...')
-        const result = await pi.exec('pip', ['install', '-r', 'requirements.txt'], {
-          cwd: worktreePath,
-          timeout: 120000
-        })
-        steps.push(result.code === 0 ? 'pip install' : `pip install (failed: ${result.code})`)
-      }
-    }
-
-    return steps
-  }
-
-  // ============ TOOLS ============
-
+function registerCreate(pi: ExtensionAPI, operations: ReturnType<typeof createOperations>) {
   pi.registerTool({
     name: 'worktree_create',
     label: 'Create Worktree',
-    description: `Create an isolated git worktree for parallel work.
-Use when you need to work on multiple independent tasks simultaneously.
-Each worktree has its own branch and working directory.
-Returns the full path to use as cwd for subsequent commands or subagent tasks.
-
-The worktree is created in .worktrees/<name> with a new branch.
-Project setup (npm/bun/cargo/etc.) runs automatically.`,
-    parameters: Type.Object({
-      name: Type.String({
-        description: 'Short name for the worktree (used as directory and branch name)'
-      }),
-      baseBranch: Type.Optional(
-        Type.String({ description: 'Branch to base off (default: current HEAD)' })
-      )
-    }),
-    async execute(_toolCallId, params, _signal, onUpdate, ctx) {
-      const { name, baseBranch } = params
-      const nameError = validateWorktreeName(name)
-      const worktreePath = worktreePathFor(ctx.cwd, name)
-      if (nameError) {
-        return toolError(nameError, {
-          name,
-          path: worktreePath,
-          branch: name
-        } satisfies WorktreeDetails)
+    description: 'Create an isolated git worktree. Does not edit .gitignore or run project setup.',
+    parameters: createSchema,
+    async execute(_id, params, signal, _update, ctx) {
+      try {
+        const worktree = await operations.create(ctx.cwd, params.name, params.baseBranch, signal)
+        return ok('create', `Created ${worktree.path}`, [worktree])
+      } catch (error) {
+        return failure('create', error)
       }
-
-      // Check if worktree already exists
-      if (worktrees.has(name) || existsSync(worktreePath)) {
-        return toolError(`Worktree "${name}" already exists at: ${worktreePath}`, {
-          name,
-          path: worktreePath,
-          branch: name
-        } satisfies WorktreeDetails)
-      }
-
-      // Ensure .worktrees is in .gitignore
-      const gitignoreResult = await ensureGitignore(ctx.cwd)
-      let output = ''
-
-      if (gitignoreResult.error) {
-        return toolError(gitignoreResult.error, {
-          name,
-          path: worktreePath,
-          branch: name
-        } satisfies WorktreeDetails)
-      }
-
-      if (gitignoreResult.added) {
-        output += `Added ${WORKTREES_DIR}/ to .gitignore\n`
-      }
-
-      // Create the worktree
-      onUpdate?.(
-        toolText('Creating worktree...', {
-          name,
-          path: worktreePath,
-          branch: name
-        } satisfies WorktreeDetails)
-      )
-
-      const args = ['worktree', 'add', join(WORKTREES_DIR, name), '-b', name]
-      if (baseBranch) {
-        args.push(baseBranch)
-      }
-
-      const createResult = await pi.exec('git', args, { cwd: ctx.cwd })
-      if (createResult.code !== 0) {
-        return toolError(commandFailure(createResult, 'Failed to create worktree'), {
-          name,
-          path: worktreePath,
-          branch: name
-        } satisfies WorktreeDetails)
-      }
-
-      output += `Created worktree at: ${worktreePath}\n`
-      output += `Branch: ${name}${baseBranch ? ` (based on ${baseBranch})` : ''}\n`
-
-      // Track worktree
-      worktrees.set(name, {
-        path: worktreePath,
-        branch: name,
-        created: Date.now(),
-        setupCompleted: false
-      })
-      updateStatusWidget(ctx)
-
-      // Run project setup
-      onUpdate?.(
-        toolText(`${output}Running project setup...`, {
-          name,
-          path: worktreePath,
-          branch: name
-        } satisfies WorktreeDetails)
-      )
-
-      const setupSteps = await detectAndRunSetup(worktreePath, (text) => {
-        onUpdate?.(
-          toolText(output + text, {
-            name,
-            path: worktreePath,
-            branch: name
-          } satisfies WorktreeDetails)
-        )
-      })
-
-      if (setupSteps.length > 0) {
-        output += `Setup completed: ${setupSteps.join(', ')}\n`
-      } else {
-        output += 'No project setup needed\n'
-      }
-
-      // Mark setup as complete
-      const info = worktrees.get(name)
-      if (info) {
-        info.setupCompleted = true
-      }
-      updateStatusWidget(ctx)
-
-      output += `\nWorktree "${name}" ready at: ${worktreePath}`
-
-      return toolText(output, { name, path: worktreePath, branch: name } satisfies WorktreeDetails)
-    }
+    },
+    renderCall: (params, theme) => renderCall('create', params, theme),
+    renderResult
   })
+}
 
+export default function worktrees(pi: ExtensionAPI) {
+  const operations = createOperations(pi)
+  registerCreate(pi, operations)
   pi.registerTool({
     name: 'worktree_list',
     label: 'List Worktrees',
-    description: 'List all git worktrees in this repository, including the main working directory.',
-    parameters: Type.Object({}),
-    async execute(_toolCallId, _params, _signal, _onUpdate, ctx) {
-      const result = await pi.exec('git', ['worktree', 'list', '--porcelain'], { cwd: ctx.cwd })
-
-      if (result.code !== 0) {
-        return toolError(commandFailure(result, 'Failed to list worktrees'), {
-          worktrees: []
-        } satisfies WorktreeListDetails)
+    description: 'List Git worktrees from the repository.',
+    parameters: listSchema,
+    async execute(_id, _params, signal, _update, ctx) {
+      try {
+        const list = await operations.list(ctx.cwd, signal)
+        return ok('list', `${list.length} worktrees`, list)
+      } catch (error) {
+        return failure('list', error)
       }
-
-      const worktreeList = parseWorktreePorcelain(result.stdout)
-      return toolText(formatWorktreeList(worktreeList), {
-        worktrees: worktreeList
-      } satisfies WorktreeListDetails)
-    }
+    },
+    renderCall: (params, theme) => renderCall('list', params, theme),
+    renderResult
   })
-
   pi.registerTool({
     name: 'worktree_remove',
     label: 'Remove Worktree',
-    description: `Remove a worktree after work is complete.
-The branch is preserved and can still be merged.
-Use force=true to remove even with uncommitted changes.`,
-    parameters: Type.Object({
-      name: Type.String({ description: 'Worktree name to remove' }),
-      force: Type.Optional(
-        Type.Boolean({ description: 'Force removal even with uncommitted changes' })
-      )
-    }),
-    async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-      const { name, force } = params
-      const nameError = validateWorktreeName(name)
-      const worktreePath = worktreePathFor(ctx.cwd, name)
-      if (nameError) {
-        return toolError(nameError, {
-          name,
-          path: worktreePath,
-          branch: name
-        } satisfies WorktreeDetails)
+    description: 'Remove a worktree while preserving its branch. Dirty worktrees require force.',
+    parameters: removeSchema,
+    async execute(_id, params, signal, _update, ctx) {
+      try {
+        const worktree = await operations.remove(ctx.cwd, params.name, params.force, signal)
+        return ok('remove', `Removed ${worktree.path}`, [worktree])
+      } catch (error) {
+        return failure('remove', error)
       }
-
-      // Check if worktree exists
-      if (!existsSync(worktreePath)) {
-        worktrees.delete(name)
-        updateStatusWidget(ctx)
-        return toolError(`Worktree "${name}" not found at: ${worktreePath}`, {
-          name,
-          path: worktreePath,
-          branch: name
-        } satisfies WorktreeDetails)
-      }
-
-      const args = ['worktree', 'remove', worktreePath]
-      if (force) {
-        args.push('--force')
-      }
-
-      const result = await pi.exec('git', args, { cwd: ctx.cwd })
-
-      if (result.code !== 0) {
-        const error = commandOutput(result)
-        if (isDirtyWorktreeRemovalError(error)) {
-          return toolError(
-            `Cannot remove worktree "${name}": has uncommitted changes.\nUse force=true to remove anyway, or commit/stash changes first.`,
-            { name, path: worktreePath, branch: name } satisfies WorktreeDetails
-          )
-        }
-        return toolError(commandFailure(result, 'Failed to remove worktree'), {
-          name,
-          path: worktreePath,
-          branch: name
-        } satisfies WorktreeDetails)
-      }
-
-      worktrees.delete(name)
-      updateStatusWidget(ctx)
-
-      return toolText(
-        `Removed worktree "${name}".\nBranch "${name}" is preserved and can still be merged.`,
-        { name, path: worktreePath, branch: name } satisfies WorktreeDetails
-      )
-    }
+    },
+    renderCall: (params, theme) => renderCall('remove', params, theme),
+    renderResult
   })
-
   pi.registerTool({
     name: 'worktree_status',
     label: 'Worktree Status',
-    description: 'Get git status and diff summary for a specific worktree.',
-    parameters: Type.Object({
-      name: Type.String({ description: 'Worktree name' })
-    }),
-    async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
-      const { name } = params
-      const nameError = validateWorktreeName(name)
-      const worktreePath = worktreePathFor(ctx.cwd, name)
-      if (nameError) {
-        return toolError(nameError, {
-          name,
-          path: worktreePath,
-          branch: ''
-        } satisfies WorktreeDetails)
+    description: 'Show status and diff summary for a worktree.',
+    parameters: statusSchema,
+    async execute(_id, params, signal, _update, ctx) {
+      try {
+        const value = await operations.status(ctx.cwd, params.name, signal)
+        return ok('status', value.status || 'Clean', [value.worktree], value)
+      } catch (error) {
+        return failure('status', error)
       }
-
-      if (!existsSync(worktreePath)) {
-        return toolError(`Worktree "${name}" not found`, {
-          name,
-          path: worktreePath,
-          branch: ''
-        } satisfies WorktreeDetails)
-      }
-
-      // Get status
-      const statusResult = await pi.exec('git', ['status', '--short'], { cwd: worktreePath })
-      const diffResult = await pi.exec('git', ['diff', '--stat'], { cwd: worktreePath })
-      const branchResult = await pi.exec('git', ['branch', '--show-current'], {
-        cwd: worktreePath
-      })
-
-      const branch = branchResult.stdout.trim()
-      const status = statusResult.stdout.trim()
-      const diff = diffResult.stdout.trim()
-
-      const output = formatWorktreeStatus({ name, branch, path: worktreePath, status, diff })
-      return toolText(output, { name, path: worktreePath, branch } satisfies WorktreeDetails)
-    }
+    },
+    renderCall: (params, theme) => renderCall('status', params, theme),
+    renderResult
   })
-
-  // ============ COMMANDS ============
 
   pi.registerCommand('worktrees', {
     description: 'List all git worktrees',
-    handler: async (_args, ctx) => {
-      const result = await pi.exec('git', ['worktree', 'list'], { cwd: ctx.cwd })
-      if (result.code === 0) {
-        ctx.ui.notify(result.stdout || 'No worktrees found', 'info')
-      } else {
-        ctx.ui.notify(`Error: ${result.stderr || result.stdout}`, 'error')
+    async handler(_args, ctx) {
+      try {
+        const list = await operations.list(ctx.cwd, ctx.signal)
+        ctx.ui.notify(
+          list.map((item) => `${item.branch}: ${item.path}`).join('\n') || 'No worktrees found',
+          'info'
+        )
+      } catch (error) {
+        ctx.ui.notify(error instanceof Error ? error.message : String(error), 'error')
       }
     }
-  })
-
-  pi.registerCommand('worktree', {
-    description: 'Select and manage a worktree (with filtering)',
-    handler: async (_args, ctx) => {
-      // Get all worktrees
-      const result = await pi.exec('git', ['worktree', 'list', '--porcelain'], { cwd: ctx.cwd })
-      if (result.code !== 0) {
-        ctx.ui.notify(`Error: ${result.stderr || result.stdout}`, 'error')
-        return
-      }
-
-      const worktreeList = parseWorktreePorcelain(result.stdout)
-
-      if (worktreeList.length === 0) {
-        ctx.ui.notify('No worktrees found', 'info')
-        return
-      }
-
-      // Build selection items with value (branch) and description (path)
-      const selectItems = worktreeList.map((wt) => ({
-        value: wt.branch,
-        label: wt.branch + (wt.isMain ? ' (main)' : ''),
-        description: wt.path
-      }))
-
-      // Show custom filterable selector
-      const selectedWorktree = await ctx.ui.custom<WorktreeEntry | undefined>(
-        (tui, theme, _keybindings, done) => {
-          const selectListTheme = getSelectListTheme()
-          let filter = ''
-          let cachedLines: string[] | undefined
-
-          const selectList = new SelectList(selectItems, 10, selectListTheme)
-
-          selectList.onSelect = (item: SelectItem) => {
-            const wt = worktreeList.find((w) => w.branch === item.value)
-            done(wt)
-          }
-          selectList.onCancel = () => done(undefined)
-
-          const component: Component = {
-            invalidate() {
-              cachedLines = undefined
-            },
-
-            render(width: number): string[] {
-              if (cachedLines) return cachedLines
-
-              const lines: string[] = []
-              const add = (s: string) => lines.push(truncateToWidth(s, width))
-
-              add(theme.fg('accent', '─'.repeat(width)))
-              add(theme.fg('text', ' Select worktree:'))
-              lines.push('')
-
-              // Filter input display
-              const filterDisplay = filter
-                ? theme.fg('accent', ` Filter: ${filter}`)
-                : theme.fg('dim', ' Type to filter...')
-              add(filterDisplay)
-              lines.push('')
-
-              // Render select list
-              const listLines = selectList.render(width).map((line) => truncateToWidth(line, width))
-              lines.push(...listLines)
-
-              lines.push('')
-              add(theme.fg('dim', ' ↑↓ navigate  Enter select  Esc cancel  Type to filter'))
-              add(theme.fg('accent', '─'.repeat(width)))
-
-              cachedLines = lines
-              return lines
-            },
-
-            handleInput(data: string) {
-              // Escape to cancel
-              if (matchesKey(data, Key.escape)) {
-                done(undefined)
-                return
-              }
-
-              // Navigation
-              if (matchesKey(data, Key.up) || matchesKey(data, Key.down)) {
-                selectList.handleInput(data)
-                cachedLines = undefined
-                tui.requestRender()
-                return
-              }
-
-              // Selection
-              if (matchesKey(data, Key.enter)) {
-                selectList.handleInput(data)
-                return
-              }
-
-              // Backspace to delete filter
-              if (matchesKey(data, Key.backspace) || data === '\x7f') {
-                if (filter.length > 0) {
-                  filter = filter.slice(0, -1)
-                  selectList.setFilter(filter)
-                  cachedLines = undefined
-                  tui.requestRender()
-                }
-                return
-              }
-
-              // Printable characters for filter
-              if (data.length === 1 && data >= ' ' && data <= '~') {
-                filter += data
-                selectList.setFilter(filter)
-                cachedLines = undefined
-                tui.requestRender()
-              }
-            }
-          }
-
-          return component
-        }
-      )
-
-      if (!selectedWorktree) return
-
-      // Show actions for selected worktree
-      const actions = selectedWorktree.isMain
-        ? ['Show path', 'Show status']
-        : ['Show path', 'Show status', 'Remove worktree']
-
-      const action = await ctx.ui.select(`${selectedWorktree.branch}:`, actions)
-      if (action === undefined) return
-
-      switch (action) {
-        case 'Show path': {
-          ctx.ui.notify(`Path: ${selectedWorktree.path}`, 'info')
-          ctx.ui.setEditorText(`cd ${selectedWorktree.path}`)
-          break
-        }
-        case 'Show status': {
-          const statusResult = await pi.exec('git', ['status', '--short'], {
-            cwd: selectedWorktree.path
-          })
-          const diffResult = await pi.exec('git', ['diff', '--stat'], {
-            cwd: selectedWorktree.path
-          })
-
-          const output = formatWorktreeStatus({
-            branch: selectedWorktree.branch,
-            path: selectedWorktree.path,
-            status: statusResult.stdout.trim(),
-            diff: diffResult.stdout.trim(),
-            diffLabel: 'Diff'
-          })
-
-          ctx.ui.notify(output, 'info')
-          break
-        }
-        case 'Remove worktree': {
-          const name = selectedWorktree.path.split('/').pop() || ''
-          const confirm = await ctx.ui.confirm(
-            'Remove worktree?',
-            `Remove "${name}"?\nBranch will be preserved for merging.`
-          )
-          if (!confirm) return
-
-          const removeResult = await pi.exec('git', ['worktree', 'remove', selectedWorktree.path], {
-            cwd: ctx.cwd
-          })
-          if (removeResult.code === 0) {
-            worktrees.delete(name)
-            updateStatusWidget(ctx)
-            ctx.ui.notify(`Removed worktree "${name}"`, 'info')
-          } else {
-            const error = removeResult.stderr || removeResult.stdout
-            if (isDirtyWorktreeRemovalError(error)) {
-              ctx.ui.notify(`Cannot remove: has uncommitted changes. Commit or use force.`, 'error')
-            } else {
-              ctx.ui.notify(`Error: ${error}`, 'error')
-            }
-          }
-          break
-        }
-      }
-    }
-  })
-
-  // ============ SYSTEM PROMPT INJECTION ============
-
-  pi.on('before_agent_start', async (event, ctx) => {
-    // Check if in a git repo
-    const gitCheck = await pi.exec('git', ['rev-parse', '--git-dir'], { cwd: ctx.cwd })
-    if (gitCheck.code !== 0) return
-
-    const activeWorktrees =
-      worktrees.size > 0
-        ? Array.from(worktrees.entries())
-            .map(([name, info]) => `  - ${name}: ${info.path} (branch: ${info.branch})`)
-            .join('\n')
-        : '  None currently active'
-
-    const injection = `
-## Git Worktrees
-
-You have tools for managing git worktrees - isolated workspaces for parallel work:
-
-- **worktree_create**: Create a new worktree with its own branch. Returns the path to use as cwd.
-- **worktree_list**: List all worktrees in the repository.
-- **worktree_status**: Check git status of a specific worktree.
-- **worktree_remove**: Remove a worktree (branch is preserved for merging).
-
-**Active session worktrees:**
-${activeWorktrees}
-
-**When to use worktrees:**
-- Running multiple subagents in parallel on independent tasks
-- Each subagent should work in its own worktree to avoid file conflicts
-- After parallel work completes, review and merge branches
-
-**Example workflow with subagent:**
-1. worktree_create(name: "task-a")
-2. worktree_create(name: "task-b")
-3. subagent(tasks: [
-     { agent: "worker", task: "...", cwd: ".worktrees/task-a" },
-     { agent: "worker", task: "...", cwd: ".worktrees/task-b" }
-   ])
-4. Review changes with worktree_status
-5. Merge branches: git merge task-a && git merge task-b
-6. Cleanup: worktree_remove("task-a"), worktree_remove("task-b")
-`
-
-    return { systemPrompt: event.systemPrompt + injection }
-  })
-
-  // ============ SESSION EVENTS ============
-
-  pi.on('session_start', async (_event, ctx) => {
-    // Discover existing worktrees created by this extension
-    const result = await pi.exec('git', ['worktree', 'list', '--porcelain'], { cwd: ctx.cwd })
-    if (result.code === 0) {
-      const lines = result.stdout.split('\n')
-      let currentPath = ''
-
-      for (const line of lines) {
-        if (line.startsWith('worktree ')) {
-          currentPath = line.slice(9)
-        } else if (line.startsWith('branch ') && currentPath.includes(WORKTREES_DIR)) {
-          const branch = line.slice(7).replace('refs/heads/', '')
-          const name = currentPath.split('/').pop() || branch
-
-          worktrees.set(name, {
-            path: currentPath,
-            branch,
-            created: Date.now(),
-            setupCompleted: true // Assume setup was done
-          })
-        } else if (line === '') {
-          currentPath = ''
-        }
-      }
-    }
-
-    updateStatusWidget(ctx)
   })
 }
