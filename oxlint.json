@@ -41,7 +41,7 @@
   },
   "overrides": [
     {
-      "files": ["extensions/computer/**/*.ts"],
+      "files": ["extensions/computer/**/*.ts", "extensions/worktrees/**/*.ts"],
       "rules": {
         "max-lines-per-function": [
           "error",
